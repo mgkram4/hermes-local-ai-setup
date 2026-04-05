@@ -1,0 +1,291 @@
+/* OLYMPUS DASHBOARD — Bento Box Grid Theme */
+
+Screen {
+    background: #0A0A12;
+}
+
+.hidden {
+    display: none;
+}
+
+/* ─── View containers ─── */
+#view-assembly, #view-chronicle, #view-oracle,
+#view-tablets, #view-deepdive, #view-local, #view-switch {
+    height: 1fr;
+}
+
+/* ─── Navigation tabs ─── */
+#nav-tabs {
+    dock: top;
+    height: 3;
+    background: #08080F;
+    border-bottom: heavy #FFD700;
+    padding: 0 1;
+}
+
+#header-title {
+    color: #FFD700;
+    text-style: bold;
+    width: auto;
+}
+
+#header-status {
+    color: #00D4FF;
+    dock: right;
+    width: auto;
+}
+
+.nav-button {
+    min-width: 14;
+    height: 3;
+    margin: 0 0;
+    background: #08080F;
+    color: #555577;
+    border: none;
+    text-style: bold;
+}
+
+.nav-button:hover {
+    background: #12122A;
+    color: #FFD700;
+}
+
+.nav-button.-active {
+    background: #12122A;
+    color: #FFD700;
+    border-bottom: heavy #FFD700;
+}
+
+#back-btn {
+    min-width: 6;
+    background: #08080F;
+    color: #00D4FF;
+    border: none;
+}
+
+#back-btn:hover {
+    color: #FFD700;
+}
+
+/* ─── Footer bar ─── */
+#footer-bar {
+    dock: bottom;
+    height: 1;
+    background: #08080F;
+    border-top: heavy #1A1A3A;
+    color: #555577;
+    padding: 0 2;
+    text-align: center;
+}
+
+/* ─── Main content ─── */
+#main-content {
+    height: 1fr;
+    padding: 0 1;
+}
+
+/* ─── Bento Box System ─── */
+.bento {
+    border: round #2A2A50;
+    background: #0C0C18;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    text-align: center;
+}
+
+.bento:hover {
+    border: round #3A3A6A;
+}
+
+.bento:focus {
+    border: round #FFD700;
+}
+
+.bento-gold {
+    border: round #3A3010;
+    background: #0C0C18;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    text-align: center;
+}
+
+.bento-gold:hover {
+    border: round #FFD700;
+}
+
+.bento-hero {
+    border: heavy #2A2A50;
+    background: #08080F;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    text-align: center;
+}
+
+.bento-row {
+    layout: horizontal;
+    height: auto;
+    margin: 0 0 1 0;
+}
+
+.bento-row > * {
+    width: 1fr;
+    margin: 0 1 0 0;
+}
+
+.bento-2col {
+    layout: grid;
+    grid-size: 2;
+    grid-gutter: 1;
+    height: auto;
+    margin: 0 0 1 0;
+}
+
+.bento-3col {
+    layout: grid;
+    grid-size: 3;
+    grid-gutter: 1;
+    height: auto;
+    margin: 0 0 1 0;
+}
+
+.bento-4col {
+    layout: grid;
+    grid-size: 4;
+    grid-gutter: 1;
+    height: auto;
+    margin: 0 0 1 0;
+}
+
+.bento-wide {
+    column-span: 2;
+}
+
+.bento-full {
+    column-span: 4;
+}
+
+/* ─── Legacy panel compat ─── */
+.divine-panel {
+    border: round #2A2A50;
+    background: #0C0C18;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    text-align: center;
+}
+
+.divine-panel:focus {
+    border: round #FFD700;
+}
+
+/* ─── Assembly view ─── */
+#pantheon-row {
+    height: auto;
+    min-height: 7;
+    layout: horizontal;
+    margin: 0 0 1 0;
+}
+
+.god-card {
+    width: 1fr;
+    height: auto;
+    min-height: 5;
+    border: round #2A2A50;
+    background: #0C0C18;
+    padding: 1 1;
+    margin: 0 1 0 0;
+    content-align: center middle;
+    text-align: center;
+}
+
+.god-card:hover {
+    border: round #FFD700;
+    background: #12122A;
+}
+
+#bottom-row {
+    layout: horizontal;
+    height: auto;
+    min-height: 10;
+}
+
+#recent-sessions {
+    width: 2fr;
+    margin-right: 1;
+}
+
+#memory-preview {
+    width: 1fr;
+}
+
+/* ─── Inputs ─── */
+#search-input, #dive-input {
+    width: 100%;
+    background: #0C0C18;
+    color: #E0F7FF;
+    border: round #2A2A50;
+    margin: 0 0 1 0;
+}
+
+#search-input:focus, #dive-input:focus {
+    border: round #FFD700;
+}
+
+#switch-row {
+    layout: horizontal;
+    height: auto;
+    margin: 0 0 1 0;
+}
+
+#switch-input-model {
+    width: 2fr;
+    background: #0C0C18;
+    color: #E0F7FF;
+    border: round #2A2A50;
+    margin: 0 1 0 0;
+}
+
+#switch-input-context {
+    width: 1fr;
+    min-width: 18;
+    background: #0C0C18;
+    color: #E0F7FF;
+    border: round #2A2A50;
+    margin: 0 0 0 0;
+}
+
+#switch-input-model:focus, #switch-input-context:focus {
+    border: round #FFD700;
+}
+
+/* ─── Oracle stat cards ─── */
+.stat-card {
+    width: 1fr;
+    height: auto;
+    min-height: 5;
+    border: round #2A2A50;
+    background: #0C0C18;
+    padding: 1;
+    margin: 0 1 1 0;
+    content-align: center middle;
+    text-align: center;
+}
+
+#stats-row {
+    layout: horizontal;
+    height: auto;
+    min-height: 5;
+    margin-bottom: 1;
+}
+
+/* ─── Scrollbar styling ─── */
+Scrollbar {
+    background: #0A0A12;
+}
+
+ScrollBar > .scrollbar--bar {
+    color: #1A1A3A;
+}
+
+ScrollBar > .scrollbar--bar:hover {
+    color: #FFD700;
+}

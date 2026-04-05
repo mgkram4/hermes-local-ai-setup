@@ -443,12 +443,12 @@ DEFAULT_CONFIG = {
         "provider": "",
     },
 
-    # Subagent delegation — override the provider:model used by delegate_task
-    # so child agents can run on a different (cheaper/faster) provider and model.
-    # Uses the same runtime provider resolution as CLI/gateway startup, so all
-    # configured providers (OpenRouter, Nous, Z.ai, Kimi, etc.) are supported.
+    # Subagent delegation — optional alternate **endpoint** for delegate_task
+    # (delegation.provider / delegation.base_url). Subagents always use the
+    # **same model id** as the parent agent; delegation.model is ignored.
+    # Uses the same runtime provider resolution as CLI/gateway startup.
     "delegation": {
-        "model": "",       # e.g. "google/gemini-3-flash-preview" (empty = inherit parent model)
+        "model": "",       # Ignored — subagents always use the parent model (kept for YAML compatibility)
         "provider": "",    # e.g. "openrouter" (empty = inherit parent provider + credentials)
         "base_url": "",    # direct OpenAI-compatible endpoint for subagents
         "api_key": "",     # API key for delegation.base_url (falls back to OPENAI_API_KEY)

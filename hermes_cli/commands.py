@@ -103,6 +103,10 @@ COMMAND_REGISTRY: list[CommandDef] = [
                subcommands=("none", "low", "minimal", "medium", "high", "xhigh", "show", "hide", "on", "off")),
     CommandDef("skin", "Show or change the display skin/theme", "Configuration",
                cli_only=True, args_hint="[name]"),
+    CommandDef("dashboard", "Launch the Olympus interactive dashboard", "Info",
+               cli_only=True),
+    CommandDef("tree", "Show tool call tree for the current session", "Info",
+               cli_only=True),
     CommandDef("voice", "Toggle voice mode", "Configuration",
                args_hint="[on|off|tts|status]", subcommands=("on", "off", "tts", "status")),
 

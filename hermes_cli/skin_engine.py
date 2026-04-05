@@ -122,6 +122,8 @@ class SkinConfig:
     tool_emojis: Dict[str, str] = field(default_factory=dict)  # per-tool emoji overrides
     banner_logo: str = ""    # Rich-markup ASCII art logo (replaces HERMES_AGENT_LOGO)
     banner_hero: str = ""    # Rich-markup hero art (replaces HERMES_CADUCEUS)
+    pantheon: List[Dict[str, str]] = field(default_factory=list)  # [{name, role}] for Pantheon Registry
+    pantheon_style: str = ""  # "strip" for compact horizontal, "" for default grid
 
     def get_color(self, key: str, fallback: str = "") -> str:
         """Get a color value with fallback."""
@@ -552,6 +554,8 @@ def _build_skin_config(data: Dict[str, Any]) -> SkinConfig:
         tool_emojis=data.get("tool_emojis", {}),
         banner_logo=data.get("banner_logo", ""),
         banner_hero=data.get("banner_hero", ""),
+        pantheon=data.get("pantheon", []),
+        pantheon_style=data.get("pantheon_style", ""),
     )
 
 

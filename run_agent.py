@@ -1249,6 +1249,11 @@ class AIAgent:
         self.session_estimated_cost_usd = 0.0
         self.session_cost_status = "unknown"
         self.session_cost_source = "none"
+        self.last_output_tok_s = 0.0
+        self._last_api_start = 0.0
+        self.llm_phase = "idle"
+        self.llm_phase_start = 0.0
+        self.llm_ttft = 0.0
         
         if not self.quiet_mode:
             if compression_enabled:
@@ -1315,6 +1320,11 @@ class AIAgent:
         self.session_estimated_cost_usd = 0.0
         self.session_cost_status = "unknown"
         self.session_cost_source = "none"
+        self.last_output_tok_s = 0.0
+        self._last_api_start = 0.0
+        self.llm_phase = "idle"
+        self.llm_phase_start = 0.0
+        self.llm_ttft = 0.0
         
         # Turn counter (added after reset_session_state was first written — #2635)
         self._user_turn_count = 0
@@ -4318,12 +4328,17 @@ class AIAgent:
         last_chunk_time = {"t": time.time()}
 
         def _fire_first_delta():
-            if not first_delta_fired["done"] and on_first_delta:
+            if not first_delta_fired["done"]:
                 first_delta_fired["done"] = True
-                try:
-                    on_first_delta()
-                except Exception:
-                    pass
+                now = time.time()
+                self.llm_ttft = now - self._last_api_start
+                self.llm_phase = "generating"
+                self.llm_phase_start = now
+                if on_first_delta:
+                    try:
+                        on_first_delta()
+                    except Exception:
+                        pass
 
         def _call_chat_completions():
             """Stream a chat completions response."""
@@ -7171,6 +7186,10 @@ class AIAgent:
                 logging.debug(f"Total message size: ~{approx_tokens:,} tokens")
             
             api_start_time = time.time()
+            self._last_api_start = api_start_time
+            self.llm_phase = "processing"
+            self.llm_phase_start = api_start_time
+            self.llm_ttft = 0.0
             retry_count = 0
             max_retries = 3
             primary_recovery_attempted = False
@@ -7230,6 +7249,7 @@ class AIAgent:
                         response = self._interruptible_api_call(api_kwargs)
                     
                     api_duration = time.time() - api_start_time
+                    self.llm_phase = "idle"
                     
                     # Stop thinking spinner silently -- the response box or tool
                     # execution messages that follow are more informative.
@@ -7555,6 +7575,11 @@ class AIAgent:
                         self.session_cache_read_tokens += canonical_usage.cache_read_tokens
                         self.session_cache_write_tokens += canonical_usage.cache_write_tokens
                         self.session_reasoning_tokens += canonical_usage.reasoning_tokens
+
+                        if self._last_api_start and completion_tokens > 0:
+                            api_elapsed = time.time() - self._last_api_start
+                            if api_elapsed > 0.1:
+                                self.last_output_tok_s = round(completion_tokens / api_elapsed, 1)
 
                         cost_result = estimate_usage_cost(
                             self.model,

@@ -2487,6 +2487,13 @@ def cmd_config(args):
     config_command(args)
 
 
+def cmd_dashboard(args):
+    """Launch the Olympus interactive dashboard."""
+    _require_tty("dashboard")
+    from hermes_cli.dashboard.app import run_dashboard
+    run_dashboard()
+
+
 def cmd_version(args):
     """Show version."""
     print(f"Hermes Agent v{__version__} ({__release_date__})")
@@ -5300,6 +5307,15 @@ For more help on a command:
         claw_command(args)
 
     claw_parser.set_defaults(func=cmd_claw)
+
+    # =========================================================================
+    # dashboard command
+    # =========================================================================
+    dashboard_parser = subparsers.add_parser(
+        "dashboard",
+        help="Launch the Olympus interactive dashboard (TUI)",
+    )
+    dashboard_parser.set_defaults(func=cmd_dashboard)
 
     # =========================================================================
     # version command

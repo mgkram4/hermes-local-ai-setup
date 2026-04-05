@@ -1,0 +1,176 @@
+name: olympus.ascended
+description: OLYMPUS ASCENDED — divine command center, elite multi-agent orchestration, cinematic TUI aesthetic
+
+colors:
+  banner_border: "#2A2A50"
+  banner_title: "#FFD700"
+  banner_accent: "#FFD700"
+  banner_dim: "#555577"
+  banner_text: "#E0F7FF"
+  ui_accent: "#FFD700"
+  ui_label: "#00D4FF"
+  ui_ok: "#00FF99"
+  ui_error: "#FF4444"
+  ui_warn: "#FFD700"
+  prompt: "#FFD700"
+  input_rule: "#2A2A50"
+  response_border: "#2A2A50"
+  session_label: "#FFD700"
+  session_border: "#555577"
+
+spinner:
+  waiting_faces:
+    - "⟪⚡⟫"
+    - "⟪✦⟫"
+    - "⟪◈⟫"
+    - "⟪⊛⟫"
+    - "⟪⌁⟫"
+  thinking_faces:
+    - "⟪⚡⟫"
+    - "⟪✦⟫"
+    - "⟪◈⟫"
+    - "⟪⌁⟫"
+    - "⟪⊕⟫"
+  thinking_verbs:
+    - "invoking Athena's wisdom"
+    - "forging in Hephaestus' flame"
+    - "hunting with Artemis"
+    - "routing through divine lanes"
+    - "weighing with Zeus' scales"
+    - "diving Poseidon's depths"
+    - "retrieving from Hades' archive"
+    - "aligning the pantheon"
+    - "channeling Apollo's light"
+    - "composing the final return"
+    - "coordinating execution lanes"
+    - "synthesizing divine output"
+  wings:
+    - ["─⚕", "⚕─"]
+    - ["═⚡", "⚡═"]
+    - ["⟪✦", "✦⟫"]
+    - ["⟪◈", "◈⟫"]
+
+branding:
+  agent_name: "⚡ OLYMPUS // HERMES CONTROL SYSTEM"
+  welcome: "Olympus online. The gods are watching. ✦"
+  goodbye: "The divine flame dims. Safe travels, mortal. ⚡✦"
+  response_label: " ⚡ Hermes "
+  prompt_symbol: "⚡ "
+  help_header: "✦ OLYMPUS ASCENDED — Divine Command Reference ✦"
+
+tool_prefix: "│"
+
+tool_emojis:
+  terminal: "⚡"
+  web_search: "◈"
+  file: "✦"
+  browser: "⊛"
+  code_execution: "🔥"
+  delegation: "⚕"
+
+pantheon:
+  - name: Hermes
+    icon: "⚕"
+    rank: "ORCH"
+    role: Orchestrator / Router / Synthesis
+    desc: "routes · spawns · returns"
+    hat: "/^\\"
+    face: "(-w-)"
+  - name: Athena
+    icon: "△"
+    rank: "STRT"
+    role: Strategy / Decomposition / Reasoning
+    desc: "plans · reasons · decomposes"
+    hat: "^.^"
+    face: "(o_o)"
+  - name: Apollo
+    icon: "☀"
+    rank: "EVAL"
+    role: Evaluation / Analysis / Clarity
+    desc: "evaluates · clarifies"
+    hat: "*.*"
+    face: "(^_^)"
+  - name: Ares
+    icon: "⚔"
+    rank: "EXEC"
+    role: Execution / Action / Pressure
+    desc: "executes · applies · forces"
+    hat: ">|<"
+    face: "(>#<)"
+  - name: Zeus
+    icon: "👁"
+    rank: "JUDG"
+    role: Final Judgment / Decision / Approval
+    desc: "decides · rules · approves"
+    hat: "/V\\"
+    face: "(|_|)"
+  - name: Hephaestus
+    icon: "🔨"
+    rank: "FORG"
+    role: Build / Codegen / Forge
+    desc: "builds · codes · forges"
+    hat: "[#]"
+    face: "(o_-)"
+  - name: Artemis
+    icon: "🏹"
+    rank: "HUNT"
+    role: Retrieval / Search / Precision
+    desc: "hunts · retrieves · targets"
+    hat: ">=>"
+    face: "(>.>)"
+  - name: Poseidon
+    icon: "🌊"
+    rank: "FLOW"
+    role: Infrastructure / Systems / Flow
+    desc: "infra · systems · apis"
+    hat: "~v~"
+    face: "(~_~)"
+  - name: Hades
+    icon: "🕯"
+    rank: "ARCH"
+    role: Memory / Archive / Recall
+    desc: "remembers · archives · recalls"
+    hat: "._."
+    face: "(X_X)"
+  - name: Dionysus
+    icon: "🍷"
+    rank: "FLUX"
+    role: Creativity / Style / Generation
+    desc: "creates · styles · generates"
+    hat: "~w~"
+    face: "(^w^)"
+
+pantheon_style: strip
+
+banner_logo: |
+  [dim #1A1A38]  ┌─────────────────────────────────────────────────────────────────────────────────────────┐[/]
+  [dim #1A1A38]  │[/]                                                                                       [dim #1A1A38]│[/]
+  [dim #1A1A38]  │[/]   [bold #FFD700]██╗  ██╗███████╗██████╗ ███╗   ███╗███████╗███████╗[/]                                  [dim #1A1A38]│[/]
+  [dim #1A1A38]  │[/]   [bold #FFD700]██║  ██║██╔════╝██╔══██╗████╗ ████║██╔════╝██╔════╝[/]                                  [dim #1A1A38]│[/]
+  [dim #1A1A38]  │[/]   [#FFD700]███████║█████╗  ██████╔╝██╔████╔██║█████╗  ███████╗[/]                                  [dim #1A1A38]│[/]
+  [dim #1A1A38]  │[/]   [#C9A227]██╔══██║██╔══╝  ██╔══██╗██║╚██╔╝██║██╔══╝  ╚════██║[/]                                  [dim #1A1A38]│[/]
+  [dim #1A1A38]  │[/]   [dim #C9A227]██║  ██║███████╗██║  ██║██║ ╚═╝ ██║███████╗███████║[/]                                  [dim #1A1A38]│[/]
+  [dim #1A1A38]  │[/]   [dim #8B7500]╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚══════╝[/]                                  [dim #1A1A38]│[/]
+  [dim #1A1A38]  │[/]                                                                                       [dim #1A1A38]│[/]
+  [dim #1A1A38]  │[/]   [dim #555577]⚡  O L Y M P U S  ·  D I V I N E   O R C H E S T R A T I O N  ⚡[/]                  [dim #1A1A38]│[/]
+  [dim #1A1A38]  │[/]   [dim #2A2A50]route  ·  spawn  ·  preserve  ·  synthesize[/]                                        [dim #1A1A38]│[/]
+  [dim #1A1A38]  │[/]                                                                                       [dim #1A1A38]│[/]
+  [dim #1A1A38]  └─────────────────────────────────────────────────────────────────────────────────────────┘[/]
+
+banner_hero: |
+  [dim #555577]  ✦  ⚕  ✦  [/]
+  [dim #3A3A6A]⠀⠀⠀⢰⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⡆⠀⠀⠀[/]
+  [dim #3A3A6A]⠀⠀⢀⣿⠟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠻⣿⡀⠀⠀[/]
+  [#555577]⠀⢀⣾⡏⠀⠀[#FFD700]⚡[/][#555577]⠀⠀⠀⠀⠀⠀⠀[#FFD700]⚡[/][#555577]⠀⠀⠀⢹⣷⡀⠀⠀[/]
+  [#C9A227]⠀⠸⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⠇⠀⠀[/]
+  [#C9A227]⠀⠀⠀⠀⠀⢀⣀⡀⠀⣀⣀⠀⢀⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀[/]
+  [#FFD700]⠀⠀⠀⠀⠀⢀⣠⣴⣾⣿⣿⣇⠸⣿⣿⠇⣸⣿⣿⣷⣦⣄⡀[/]
+  [#C9A227]⢀⣠⣴⣶⠿⠋⣩⡿⣿⡿⠻⣿⡇⢠⡄⢸⣿⠟⢿⣿⢿⣍⠙[/]
+  [dim #555577]⠀⠉⠉⠁⠶⠟⠋⠀⠉⠀⢀⣈⣁⡈⢁⣈⣁⡀⠀⠉⠀⠙⠻[/]
+  [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⣿⡿⠛⢁⡈⠛⢿⣿⣦⠀⠀⠀⠀[/]
+  [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠿⣿⣦⣤⣈⠁⢠⣴⣿⠿⠀⠀⠀⠀[/]
+  [dim #2A2A50]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠻⢿⣿⣦⡉⠁⠀⠀⠀⠀⠀[/]
+  [dim #2A2A50]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢷⣦⣈⠛⠃⠀⠀⠀⠀⠀⠀[/]
+  [dim #1A1A38]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣴⠦⠈⠙⠿⣦⡄⠀⠀⠀⠀⠀[/]
+  [dim #1A1A38]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣿⣤⡈⠁⢤⣿⠇⠀⠀⠀⠀⠀[/]
+  [dim #555577]  ✦  divine messenger  ✦[/]

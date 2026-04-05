@@ -2,6 +2,7 @@
 
 Features:
 - Epic Hades hero art (god of the underworld/hidden knowledge)
+- Hades braille pixel art portrait
 - Divine memory tablet with rich formatting
 - User profile tablet with personality insights
 - Memory statistics and entry counts
@@ -12,6 +13,7 @@ from textual.containers import Container, Horizontal, Vertical, ScrollableContai
 from textual.reactive import reactive
 from textual.widgets import Static
 from textual import work
+import random
 
 
 # =============================================================================
@@ -137,11 +139,41 @@ class UserTablet(Static):
         return header + "\n".join(lines)
 
 
+class HadesPortrait(Static):
+    """Hades pixel art portrait with lore and abilities."""
+    
+    god_data: reactive[dict] = reactive(dict, always_update=True)
+    
+    def render(self) -> str:
+        if not self.god_data:
+            return "[dim #555577]Summoning the Lord of the Underworld...[/]"
+        
+        pixel_art = self.god_data.get("pixel_art", "")
+        abilities = self.god_data.get("abilities", [])
+        quotes = self.god_data.get("quotes", [])
+        
+        content = ""
+        if pixel_art:
+            content += pixel_art + "\n"
+        
+        if abilities:
+            content += "\n[bold #9B59B6]DIVINE POWERS:[/]\n"
+            for ability in abilities[:3]:
+                content += f"  [dim #DDA0DD]{ability}[/]\n"
+        
+        if quotes:
+            quote = random.choice(quotes)
+            content += f"\n[italic dim #555577]\"{quote}\"[/]"
+        
+        return content
+
+
 class TabletsView(ScrollableContainer):
     """The Tablets -- Divine memory viewer with epic hero art.
     
     Features:
     - Epic Hades hero art (keeper of secrets)
+    - Hades braille pixel art portrait
     - Memory statistics bar
     - Divine memory tablet with rich formatting
     - User profile tablet with personality insights
@@ -150,13 +182,14 @@ class TabletsView(ScrollableContainer):
     def compose(self) -> ComposeResult:
         yield TabletsHero(id="tablets-hero", classes="hero-art")
         yield MemoryStats(id="memory-stats", classes="bento-gold")
+        yield HadesPortrait(id="hades-portrait", classes="divine-panel-gold")
         with Horizontal(classes="bento-row"):
             yield MemoryTablet(id="memory-tablet", classes="divine-panel")
             yield UserTablet(id="user-tablet", classes="divine-panel")
 
     @work(thread=True)
     def load_data(self) -> None:
-        from hermes_cli.dashboard.data import get_memory_entries, get_user_entries
+        from hermes_cli.dashboard.data import get_memory_entries, get_user_entries, get_god_detail
         memories = get_memory_entries()
         user = get_user_entries()
         
@@ -170,12 +203,16 @@ class TabletsView(ScrollableContainer):
             "total_chars": memory_chars + user_chars,
         }
         
-        self.app.call_from_thread(self._apply, memories, user, stats)
+        hades_data = get_god_detail("Hades")
+        
+        self.app.call_from_thread(self._apply, memories, user, stats, hades_data)
 
-    def _apply(self, memories, user, stats):
+    def _apply(self, memories, user, stats, hades_data):
         self.query_one("#memory-tablet", MemoryTablet).entries = memories
         self.query_one("#user-tablet", UserTablet).entries = user
         self.query_one("#memory-stats", MemoryStats).stats = stats
+        if hades_data:
+            self.query_one("#hades-portrait", HadesPortrait).god_data = hades_data
 
     def on_show(self) -> None:
         self.load_data()

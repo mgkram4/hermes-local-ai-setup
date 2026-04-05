@@ -9,14 +9,16 @@ Divine command center with:
 - Cost tracker widget
 - Activity heatmap and sparklines
 - Divine achievements system
+- God Gallery with epic braille pixel art portraits
 """
 
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
+from textual.containers import Container, Horizontal, Vertical, ScrollableContainer, Grid
 from textual.reactive import reactive
 from textual.widgets import Static, Button
 from textual import work
 import time
+import random
 
 
 # =============================================================================
@@ -614,6 +616,141 @@ class DivineAchievements(Static):
         return header + "\n".join(lines)
 
 
+class GodPortrait(Static):
+    """Individual god portrait with pixel art, lore, and abilities."""
+    
+    god_data: reactive[dict] = reactive(dict, always_update=True)
+    show_details: reactive[bool] = reactive(False)
+    
+    def render(self) -> str:
+        if not self.god_data:
+            return "[dim #555577]Loading divine presence...[/]"
+        
+        name = self.god_data.get("name", "Unknown")
+        icon = self.god_data.get("icon", "✦")
+        title = self.god_data.get("title", "")
+        color = self.god_data.get("color", "#FFD700")
+        pixel_art = self.god_data.get("pixel_art", "")
+        abilities = self.god_data.get("abilities", [])
+        quotes = self.god_data.get("quotes", [])
+        
+        if pixel_art:
+            return pixel_art
+        
+        # Fallback if no pixel art
+        return f"[{color}]{icon} {name}[/]\n[dim #555577]{title}[/]"
+
+
+class GodGallery(Static):
+    """Gallery showing all god portraits with epic braille pixel art."""
+    
+    gods: reactive[list] = reactive(list, always_update=True)
+    selected_god: reactive[int] = reactive(0)
+    
+    def render(self) -> str:
+        header = "[bold #FFD700]⚡ PANTHEON GALLERY — Divine Portraits ⚡[/]\n\n"
+        
+        if not self.gods:
+            return header + "[dim #555577]The gods have not yet revealed themselves...[/]"
+        
+        # Get the selected god's pixel art
+        god = self.gods[self.selected_god % len(self.gods)]
+        pixel_art = god.get("pixel_art", "")
+        name = god.get("name", "Unknown")
+        title = god.get("title", "")
+        icon = god.get("icon", "✦")
+        color = god.get("color", "#FFD700")
+        abilities = god.get("abilities", [])
+        quotes = god.get("quotes", [])
+        lore = god.get("lore", "")
+        
+        # Navigation strip
+        nav_parts = []
+        for i, g in enumerate(self.gods):
+            g_icon = g.get("icon", "✦")
+            g_color = g.get("color", "#555577")
+            if i == self.selected_god % len(self.gods):
+                nav_parts.append(f"[bold {g_color}]▶{g_icon}◀[/]")
+            else:
+                nav_parts.append(f"[dim #555577]{g_icon}[/]")
+        
+        nav_line = "  " + "  ".join(nav_parts) + "\n\n"
+        
+        # Build the display
+        content = header + nav_line
+        
+        if pixel_art:
+            content += pixel_art + "\n"
+        
+        # Add abilities
+        if abilities:
+            content += "\n[bold #FFD700]DIVINE POWERS:[/]\n"
+            for ability in abilities[:3]:
+                content += f"  [dim #00D4FF]{ability}[/]\n"
+        
+        # Add a random quote
+        if quotes:
+            quote = random.choice(quotes)
+            content += f"\n[italic dim #555577]\"{quote}\"[/]\n"
+        
+        return content
+    
+    def next_god(self) -> None:
+        """Cycle to next god."""
+        if self.gods:
+            self.selected_god = (self.selected_god + 1) % len(self.gods)
+    
+    def prev_god(self) -> None:
+        """Cycle to previous god."""
+        if self.gods:
+            self.selected_god = (self.selected_god - 1) % len(self.gods)
+
+
+class GodMiniGallery(Static):
+    """Compact god gallery showing 3 gods side by side."""
+    
+    gods: reactive[list] = reactive(list, always_update=True)
+    offset: reactive[int] = reactive(0)
+    
+    def render(self) -> str:
+        if not self.gods:
+            return "[dim #555577]Awaiting the pantheon...[/]"
+        
+        # Show 3 gods at a time
+        visible_gods = []
+        for i in range(3):
+            idx = (self.offset + i) % len(self.gods)
+            visible_gods.append(self.gods[idx])
+        
+        # Build side-by-side display (simplified - just show icons and names)
+        lines = []
+        
+        # Header row with icons
+        icon_row = "  "
+        for god in visible_gods:
+            icon = god.get("icon", "✦")
+            color = god.get("color", "#FFD700")
+            icon_row += f"[bold {color}]{icon}[/]" + " " * 22
+        lines.append(icon_row)
+        
+        # Name row
+        name_row = "  "
+        for god in visible_gods:
+            name = god.get("name", "?")[:10]
+            color = god.get("color", "#FFD700")
+            name_row += f"[{color}]{name:^10}[/]" + " " * 14
+        lines.append(name_row)
+        
+        # Title row
+        title_row = "  "
+        for god in visible_gods:
+            title = god.get("title", "")[:18]
+            title_row += f"[dim #555577]{title:^18}[/]" + " " * 6
+        lines.append(title_row)
+        
+        return "\n".join(lines)
+
+
 # =============================================================================
 # MAIN VIEW
 # =============================================================================
@@ -626,6 +763,7 @@ class AssemblyView(ScrollableContainer):
     - Quick model status with LM Studio / OpenRouter indicator
     - God Stats Leaderboard with rankings
     - Compact pantheon strip
+    - God Gallery with epic braille pixel art portraits
     - Live execution lanes
     - Activity dashboard with heatmap
     - Divine notifications
@@ -635,6 +773,7 @@ class AssemblyView(ScrollableContainer):
     """
     
     _animation_timer = None
+    _gallery_timer = None
     
     def compose(self) -> ComposeResult:
         yield HeroArt(id="hero-art", classes="hero-art")
@@ -642,6 +781,7 @@ class AssemblyView(ScrollableContainer):
         yield QuickStats(id="quick-stats", classes="bento-gold")
         yield PantheonStrip(id="pantheon-strip", classes="divine-panel")
         yield GodLeaderboard(id="god-leaderboard", classes="divine-panel-gold")
+        yield GodGallery(id="god-gallery", classes="divine-panel-gold")
         with Horizontal(classes="bento-row"):
             yield ExecutionLanes(id="exec-lanes", classes="divine-panel")
             yield ActivityDashboard(id="activity-dashboard", classes="divine-panel")
@@ -661,6 +801,7 @@ class AssemblyView(ScrollableContainer):
             get_execution_lane_stats, get_pantheon_activity,
             get_recent_notifications, get_cost_breakdown,
             get_daily_activity, get_active_model_info, get_lmstudio_models,
+            get_gods_with_pixel_art,
         )
         
         sessions = get_recent_sessions(limit=8)
@@ -677,14 +818,16 @@ class AssemblyView(ScrollableContainer):
         lms_models = get_lmstudio_models("http://localhost:1234/v1")
         lms_status = "online" if lms_models else "offline"
         
+        gods_with_art = get_gods_with_pixel_art()
+        
         self.app.call_from_thread(
             self._apply_data, 
             sessions, stats, memories, pantheon, 
             lanes, activity, notifications, costs, daily,
-            model_info, lms_status
+            model_info, lms_status, gods_with_art
         )
     
-    def _apply_data(self, sessions, stats, memories, pantheon, lanes, activity, notifications, costs, daily, model_info, lms_status):
+    def _apply_data(self, sessions, stats, memories, pantheon, lanes, activity, notifications, costs, daily, model_info, lms_status, gods_with_art):
         """Apply loaded data to widgets."""
         self.query_one("#recent-sessions", RecentSessions).sessions = sessions
         self.query_one("#quick-stats", QuickStats).stats = stats
@@ -710,6 +853,10 @@ class AssemblyView(ScrollableContainer):
         activity_dash.stats = stats
         
         self.query_one("#achievements", DivineAchievements).stats = stats
+        
+        if gods_with_art:
+            gallery = self.query_one("#god-gallery", GodGallery)
+            gallery.gods = gods_with_art
     
     def on_show(self) -> None:
         """Called when the view is shown."""
@@ -721,20 +868,33 @@ class AssemblyView(ScrollableContainer):
         self._stop_animation()
     
     def _start_animation(self) -> None:
-        """Start the hero art animation timer."""
+        """Start the hero art and gallery animation timers."""
         if self._animation_timer is None:
             self._animation_timer = self.set_interval(2.5, self._animate_hero)
+        if self._gallery_timer is None:
+            self._gallery_timer = self.set_interval(5.0, self._cycle_gallery)
     
     def _stop_animation(self) -> None:
-        """Stop the hero art animation timer."""
+        """Stop all animation timers."""
         if self._animation_timer is not None:
             self._animation_timer.stop()
             self._animation_timer = None
+        if self._gallery_timer is not None:
+            self._gallery_timer.stop()
+            self._gallery_timer = None
     
     def _animate_hero(self) -> None:
         """Cycle the hero art frame."""
         try:
             hero = self.query_one("#hero-art", HeroArt)
             hero.cycle_frame()
+        except Exception:
+            pass
+    
+    def _cycle_gallery(self) -> None:
+        """Cycle the god gallery to next god."""
+        try:
+            gallery = self.query_one("#god-gallery", GodGallery)
+            gallery.next_god()
         except Exception:
             pass

@@ -2,12 +2,14 @@
 
 Features:
 - Epic Hephaestus hero art (god of the forge/craftsmanship)
+- Hephaestus braille pixel art portrait
 - Tool-heavy sessions list with divine styling
 - Session timeline with step-by-step tool chain visualization
 - Divine forging statistics
 """
 
 import json
+import random
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
 from textual.reactive import reactive
@@ -141,6 +143,35 @@ class ToolHeavySessions(Static):
         return header + "\n".join(lines)
 
 
+class HephaestusPortrait(Static):
+    """Hephaestus pixel art portrait with lore and abilities."""
+    
+    god_data: reactive[dict] = reactive(dict, always_update=True)
+    
+    def render(self) -> str:
+        if not self.god_data:
+            return "[dim #555577]Summoning the Divine Smith...[/]"
+        
+        pixel_art = self.god_data.get("pixel_art", "")
+        abilities = self.god_data.get("abilities", [])
+        quotes = self.god_data.get("quotes", [])
+        
+        content = ""
+        if pixel_art:
+            content += pixel_art + "\n"
+        
+        if abilities:
+            content += "\n[bold #FF8C00]DIVINE POWERS:[/]\n"
+            for ability in abilities[:3]:
+                content += f"  [dim #FFA500]{ability}[/]\n"
+        
+        if quotes:
+            quote = random.choice(quotes)
+            content += f"\n[italic dim #555577]\"{quote}\"[/]"
+        
+        return content
+
+
 class SessionTimeline(Static):
     """Session timeline with step-by-step tool chain visualization."""
     
@@ -229,6 +260,7 @@ class DeepDiveView(ScrollableContainer):
     
     Features:
     - Epic Hephaestus hero art
+    - Hephaestus braille pixel art portrait
     - Forge statistics bar
     - Tool-heavy sessions list
     - Session timeline with step-by-step visualization
@@ -237,12 +269,15 @@ class DeepDiveView(ScrollableContainer):
     def compose(self) -> ComposeResult:
         yield ForgeHero(id="forge-hero", classes="hero-art")
         yield ForgeStats(id="forge-stats", classes="bento-gold")
-        yield Input(
-            placeholder="🔨 Enter a session ID (or prefix) to inspect the forging log...",
-            id="dive-input",
-            classes="divine-panel",
-        )
-        yield ToolHeavySessions(id="tool-sessions", classes="divine-panel")
+        with Horizontal(classes="bento-row"):
+            yield HephaestusPortrait(id="hephaestus-portrait", classes="divine-panel-gold")
+            with Vertical():
+                yield Input(
+                    placeholder="🔨 Enter a session ID (or prefix) to inspect the forging log...",
+                    id="dive-input",
+                    classes="divine-panel",
+                )
+                yield ToolHeavySessions(id="tool-sessions", classes="divine-panel")
         yield SessionTimeline(id="session-timeline", classes="divine-panel")
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
@@ -252,7 +287,7 @@ class DeepDiveView(ScrollableContainer):
 
     @work(thread=True)
     def load_data(self) -> None:
-        from hermes_cli.dashboard.data import get_tool_heavy_sessions
+        from hermes_cli.dashboard.data import get_tool_heavy_sessions, get_god_detail
         sessions = get_tool_heavy_sessions(limit=15)
         
         # Calculate stats
@@ -266,11 +301,15 @@ class DeepDiveView(ScrollableContainer):
             "avg_strikes": avg_strikes,
         }
         
-        self.app.call_from_thread(self._apply_sessions, sessions, stats)
+        hephaestus_data = get_god_detail("Hephaestus")
+        
+        self.app.call_from_thread(self._apply_sessions, sessions, stats, hephaestus_data)
 
-    def _apply_sessions(self, sessions, stats):
+    def _apply_sessions(self, sessions, stats, hephaestus_data):
         self.query_one("#tool-sessions", ToolHeavySessions).sessions = sessions
         self.query_one("#forge-stats", ForgeStats).stats = stats
+        if hephaestus_data:
+            self.query_one("#hephaestus-portrait", HephaestusPortrait).god_data = hephaestus_data
 
     @work(thread=True)
     def inspect_session(self, session_id: str) -> None:

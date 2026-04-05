@@ -2,6 +2,7 @@
 
 Features:
 - Epic Apollo hero art with divine eye (god of prophecy/light)
+- Apollo braille pixel art portrait
 - Enhanced stat cards with Greek styling
 - Activity sparklines with 14-day data
 - Model breakdown table with visual bars
@@ -13,6 +14,7 @@ from textual.containers import Container, Horizontal, Vertical, ScrollableContai
 from textual.reactive import reactive
 from textual.widgets import Static
 from textual import work
+import random
 
 
 # =============================================================================
@@ -201,11 +203,41 @@ class CostInsights(Static):
         return header + "\n".join(lines)
 
 
+class ApolloPortrait(Static):
+    """Apollo pixel art portrait with lore and abilities."""
+    
+    god_data: reactive[dict] = reactive(dict, always_update=True)
+    
+    def render(self) -> str:
+        if not self.god_data:
+            return "[dim #555577]Summoning the Sun God...[/]"
+        
+        pixel_art = self.god_data.get("pixel_art", "")
+        abilities = self.god_data.get("abilities", [])
+        quotes = self.god_data.get("quotes", [])
+        
+        content = ""
+        if pixel_art:
+            content += pixel_art + "\n"
+        
+        if abilities:
+            content += "\n[bold #FFE066]DIVINE POWERS:[/]\n"
+            for ability in abilities[:3]:
+                content += f"  [dim #FFD700]{ability}[/]\n"
+        
+        if quotes:
+            quote = random.choice(quotes)
+            content += f"\n[italic dim #555577]\"{quote}\"[/]"
+        
+        return content
+
+
 class OracleView(ScrollableContainer):
     """The Oracle -- Divine analytics with Apollo hero art.
     
     Features:
     - Epic Apollo hero art with divine eye
+    - Apollo braille pixel art portrait
     - Enhanced stat cards with Greek labels
     - Activity sparklines with 14-day data
     - Model breakdown with visual bars
@@ -220,6 +252,7 @@ class OracleView(ScrollableContainer):
             yield StatCard(id="stat-cost", classes="stat-card divine-panel-gold")
             yield StatCard(id="stat-tools", classes="stat-card divine-panel-gold")
         with Horizontal(classes="bento-row"):
+            yield ApolloPortrait(id="apollo-portrait", classes="divine-panel-gold")
             yield ActivityChart(id="activity-chart", classes="divine-panel")
             yield CostInsights(id="cost-insights", classes="divine-panel-gold")
         yield ModelTable(id="model-table", classes="divine-panel")
@@ -228,15 +261,16 @@ class OracleView(ScrollableContainer):
     def load_data(self) -> None:
         from hermes_cli.dashboard.data import (
             get_usage_stats, get_daily_activity, get_model_breakdown,
-            get_cost_breakdown, format_tokens, format_cost,
+            get_cost_breakdown, format_tokens, format_cost, get_god_detail,
         )
         stats = get_usage_stats()
         activity = get_daily_activity(14)
         models = get_model_breakdown()
         costs = get_cost_breakdown(30)
-        self.app.call_from_thread(self._apply, stats, activity, models, costs)
+        apollo_data = get_god_detail("Apollo")
+        self.app.call_from_thread(self._apply, stats, activity, models, costs, apollo_data)
 
-    def _apply(self, stats, activity, models, costs):
+    def _apply(self, stats, activity, models, costs, apollo_data):
         from hermes_cli.dashboard.data import format_tokens, format_cost
         
         total_tokens = stats.get("total_input_tokens", 0) + stats.get("total_output_tokens", 0)
@@ -280,6 +314,9 @@ class OracleView(ScrollableContainer):
         self.query_one("#activity-chart", ActivityChart).activity = activity
         self.query_one("#model-table", ModelTable).models = models
         self.query_one("#cost-insights", CostInsights).costs = costs
+        
+        if apollo_data:
+            self.query_one("#apollo-portrait", ApolloPortrait).god_data = apollo_data
 
     def on_show(self) -> None:
         self.load_data()

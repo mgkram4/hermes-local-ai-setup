@@ -524,6 +524,27 @@ def build_welcome_banner(console: Console, model: str, cwd: str,
             lane_parts.append(f"[{color}]{icon}[/][dim {dim}]{name}[/]")
         right_lines.append(f" [{dim}]│[/] " + f" [{dim}]→[/] ".join(lane_parts))
 
+    # Divine Quote — random quote from a random god
+    try:
+        import random
+        from hermes_cli.skin_engine import get_active_skin
+        _qskin = get_active_skin()
+        if _qskin and hasattr(_qskin, 'pantheon') and _qskin.pantheon:
+            _gods_with_quotes = [g for g in _qskin.pantheon if _qskin.get_god_quotes(g.get("name", ""))]
+            if _gods_with_quotes:
+                _qgod = random.choice(_gods_with_quotes)
+                _qgod_name = _qgod.get("name", "")
+                _qgod_icon = _qgod.get("icon", "✦")
+                _quotes = _qskin.get_god_quotes(_qgod_name)
+                if _quotes:
+                    _quote = random.choice(_quotes)
+                    _qgod_color = _qskin.get_god_color(_qgod_name) if hasattr(_qskin, 'get_god_color') else accent
+                    right_lines.append("")
+                    right_lines.append(f"[{_qgod_color}]{_qgod_icon}[/] [italic dim #555577]\"{_quote}\"[/]")
+                    right_lines.append(f"[dim #555577]  — {_qgod_name}[/]")
+    except Exception:
+        pass  # Never break the banner over quotes
+
     right_lines.append("")
     mcp_connected = sum(1 for s in mcp_status if s["connected"]) if mcp_status else 0
     summary_parts = [f"{len(tools)} tools", f"{total_skills} skills"]

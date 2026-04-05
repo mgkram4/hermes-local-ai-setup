@@ -2,6 +2,7 @@
 
 Features:
 - Epic Hermes hero art (messenger god - model routing)
+- Hermes braille pixel art portrait
 - Active model panel with divine styling
 - LM Studio status panel
 - Configured providers list
@@ -13,6 +14,7 @@ from textual.containers import Horizontal, Vertical, ScrollableContainer
 from textual.reactive import reactive
 from textual.widgets import Static, Input
 from textual import work
+import random
 
 
 # =============================================================================
@@ -121,11 +123,41 @@ class StatusMessage(Static):
         return f"\n{self.message}\n" if self.message else ""
 
 
+class HermesPortrait(Static):
+    """Hermes pixel art portrait with lore and abilities."""
+    
+    god_data: reactive[dict] = reactive(dict, always_update=True)
+    
+    def render(self) -> str:
+        if not self.god_data:
+            return "[dim #555577]Summoning the Divine Messenger...[/]"
+        
+        pixel_art = self.god_data.get("pixel_art", "")
+        abilities = self.god_data.get("abilities", [])
+        quotes = self.god_data.get("quotes", [])
+        
+        content = ""
+        if pixel_art:
+            content += pixel_art + "\n"
+        
+        if abilities:
+            content += "\n[bold #FFD700]DIVINE POWERS:[/]\n"
+            for ability in abilities[:3]:
+                content += f"  [dim #FFEC8B]{ability}[/]\n"
+        
+        if quotes:
+            quote = random.choice(quotes)
+            content += f"\n[italic dim #555577]\"{quote}\"[/]"
+        
+        return content
+
+
 class ModelSwitchView(ScrollableContainer):
     """Model Switchboard -- Divine model routing with Hermes hero art.
     
     Features:
     - Epic Hermes hero art
+    - Hermes braille pixel art portrait
     - Active model panel
     - LM Studio status
     - Configured providers list
@@ -135,6 +167,7 @@ class ModelSwitchView(ScrollableContainer):
     def compose(self) -> ComposeResult:
         yield SwitchHero(id="switch-hero", classes="hero-art")
         with Horizontal(classes="bento-row"):
+            yield HermesPortrait(id="hermes-portrait", classes="divine-panel-gold")
             yield ActiveModelPanel(id="active-model", classes="divine-panel-gold")
             yield LMStudioPanel(id="lms-panel", classes="divine-panel-gold")
         yield ProvidersPanel(id="providers-panel", classes="divine-panel")
@@ -226,10 +259,12 @@ class ModelSwitchView(ScrollableContainer):
     def load_data(self) -> None:
         from hermes_cli.dashboard.data import (
             get_active_model_info, get_custom_providers, get_lmstudio_models,
+            get_god_detail,
         )
         
         active = get_active_model_info()
         providers = get_custom_providers()
+        hermes_data = get_god_detail("Hermes")
 
         # Find LM Studio URLs
         lms_urls = set()
@@ -293,12 +328,15 @@ class ModelSwitchView(ScrollableContainer):
         
         prov_text = "\n".join(prov_lines)
 
-        self.app.call_from_thread(self._apply, active, lms_text, prov_text)
+        self.app.call_from_thread(self._apply, active, lms_text, prov_text, hermes_data)
 
-    def _apply(self, active: dict, lms_text: str, prov_text: str) -> None:
+    def _apply(self, active: dict, lms_text: str, prov_text: str, hermes_data: dict) -> None:
         self.query_one("#active-model", ActiveModelPanel).info = active
         self.query_one("#lms-panel", LMStudioPanel).content = lms_text
         self.query_one("#providers-panel", ProvidersPanel).content = prov_text
+        
+        if hermes_data:
+            self.query_one("#hermes-portrait", HermesPortrait).god_data = hermes_data
         
         model_inp = self.query_one("#switch-input-model", Input)
         ctx_inp = self.query_one("#switch-input-context", Input)

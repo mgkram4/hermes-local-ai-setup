@@ -5,6 +5,7 @@ Features:
 - Divine session list with rich formatting
 - FTS5 powered search with Greek styling
 - Activity sparklines and session stats
+- Artemis braille pixel art portrait
 """
 
 from textual.app import ComposeResult
@@ -12,6 +13,7 @@ from textual.containers import Container, Horizontal, Vertical, ScrollableContai
 from textual.reactive import reactive
 from textual.widgets import Static, Input, Button
 from textual import work
+import random
 
 
 # =============================================================================
@@ -126,11 +128,41 @@ class SearchBox(Static):
         )
 
 
+class ArtemisPortrait(Static):
+    """Artemis pixel art portrait with lore and abilities."""
+    
+    god_data: reactive[dict] = reactive(dict, always_update=True)
+    
+    def render(self) -> str:
+        if not self.god_data:
+            return "[dim #555577]Summoning the Huntress...[/]"
+        
+        pixel_art = self.god_data.get("pixel_art", "")
+        abilities = self.god_data.get("abilities", [])
+        quotes = self.god_data.get("quotes", [])
+        
+        content = ""
+        if pixel_art:
+            content += pixel_art + "\n"
+        
+        if abilities:
+            content += "\n[bold #32CD32]DIVINE POWERS:[/]\n"
+            for ability in abilities[:3]:
+                content += f"  [dim #90EE90]{ability}[/]\n"
+        
+        if quotes:
+            quote = random.choice(quotes)
+            content += f"\n[italic dim #555577]\"{quote}\"[/]"
+        
+        return content
+
+
 class ChronicleView(ScrollableContainer):
     """The Chronicle -- Divine session history with epic hero art.
     
     Features:
     - Epic scroll hero art with Artemis theming
+    - Artemis braille pixel art portrait
     - Session statistics bar
     - FTS5 powered search
     - Rich session list with tool indicators
@@ -139,12 +171,15 @@ class ChronicleView(ScrollableContainer):
     def compose(self) -> ComposeResult:
         yield ChronicleHero(id="chronicle-hero", classes="hero-art")
         yield SessionStats(id="session-stats", classes="bento-gold")
-        yield SearchBox(id="search-box", classes="divine-panel")
-        yield Static(
-            "  [dim #32CD32]TIME            TITLE" + " " * 24 + 
-            "MODEL             MSGS  TOOLS    COST    SRC   ID[/]",
-            classes="bento-gold",
-        )
+        with Horizontal(classes="bento-row"):
+            yield ArtemisPortrait(id="artemis-portrait", classes="divine-panel-gold")
+            with Vertical():
+                yield SearchBox(id="search-box", classes="divine-panel")
+                yield Static(
+                    "  [dim #32CD32]TIME            TITLE" + " " * 24 + 
+                    "MODEL             MSGS  TOOLS    COST    SRC   ID[/]",
+                    classes="bento-gold",
+                )
         yield SessionList(id="session-list", classes="divine-panel")
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
@@ -156,7 +191,7 @@ class ChronicleView(ScrollableContainer):
 
     @work(thread=True)
     def load_data(self) -> None:
-        from hermes_cli.dashboard.data import get_recent_sessions
+        from hermes_cli.dashboard.data import get_recent_sessions, get_god_detail
         sessions = get_recent_sessions(limit=50)
         
         # Calculate stats
@@ -174,11 +209,13 @@ class ChronicleView(ScrollableContainer):
             "week": week_count,
         }
         
-        self.app.call_from_thread(self._apply, sessions, stats)
+        artemis_data = get_god_detail("Artemis")
+        
+        self.app.call_from_thread(self._apply, sessions, stats, artemis_data)
 
     @work(thread=True)
     def search(self, query: str) -> None:
-        from hermes_cli.dashboard.data import search_sessions
+        from hermes_cli.dashboard.data import search_sessions, get_god_detail
         results = search_sessions(query, limit=30)
         
         stats = {
@@ -187,11 +224,15 @@ class ChronicleView(ScrollableContainer):
             "week": 0,
         }
         
-        self.app.call_from_thread(self._apply, results, stats)
+        artemis_data = get_god_detail("Artemis")
+        
+        self.app.call_from_thread(self._apply, results, stats, artemis_data)
 
-    def _apply(self, sessions, stats):
+    def _apply(self, sessions, stats, artemis_data):
         self.query_one("#session-list", SessionList).sessions = sessions
         self.query_one("#session-stats", SessionStats).stats = stats
+        if artemis_data:
+            self.query_one("#artemis-portrait", ArtemisPortrait).god_data = artemis_data
 
     def on_show(self) -> None:
         self.load_data()

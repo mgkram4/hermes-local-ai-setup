@@ -2,6 +2,7 @@
 
 Features:
 - Epic Poseidon hero art (god of the sea/depths - local inference)
+- Poseidon braille pixel art portrait
 - LM Studio connection status with divine styling
 - Local model statistics and breakdown
 - Recent local sessions list
@@ -9,6 +10,7 @@ Features:
 
 import os
 import json
+import random
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
 from textual.reactive import reactive
@@ -191,11 +193,41 @@ class RecentLocalSessions(Static):
         return header + "\n".join(lines)
 
 
+class PoseidonPortrait(Static):
+    """Poseidon pixel art portrait with lore and abilities."""
+    
+    god_data: reactive[dict] = reactive(dict, always_update=True)
+    
+    def render(self) -> str:
+        if not self.god_data:
+            return "[dim #555577]Summoning the Lord of the Depths...[/]"
+        
+        pixel_art = self.god_data.get("pixel_art", "")
+        abilities = self.god_data.get("abilities", [])
+        quotes = self.god_data.get("quotes", [])
+        
+        content = ""
+        if pixel_art:
+            content += pixel_art + "\n"
+        
+        if abilities:
+            content += "\n[bold #1E90FF]DIVINE POWERS:[/]\n"
+            for ability in abilities[:3]:
+                content += f"  [dim #87CEEB]{ability}[/]\n"
+        
+        if quotes:
+            quote = random.choice(quotes)
+            content += f"\n[italic dim #555577]\"{quote}\"[/]"
+        
+        return content
+
+
 class LocalModelsView(ScrollableContainer):
     """Local Model Forge -- Divine depths with Poseidon hero art.
     
     Features:
     - Epic Poseidon hero art
+    - Poseidon braille pixel art portrait
     - LM Studio connection status
     - Local model statistics
     - Model breakdown table
@@ -205,6 +237,7 @@ class LocalModelsView(ScrollableContainer):
     def compose(self) -> ComposeResult:
         yield LocalHero(id="local-hero", classes="hero-art")
         with Horizontal(classes="bento-row"):
+            yield PoseidonPortrait(id="poseidon-portrait", classes="divine-panel-gold")
             yield ConnectionStatus(id="conn-status", classes="divine-panel-gold")
             yield LocalStats(id="local-stats", classes="divine-panel-gold")
         yield LocalModelBreakdown(id="local-breakdown", classes="divine-panel")
@@ -214,13 +247,14 @@ class LocalModelsView(ScrollableContainer):
     def load_data(self) -> None:
         from hermes_cli.dashboard.data import (
             get_local_model_stats, get_local_model_breakdown,
-            get_local_model_sessions,
+            get_local_model_sessions, get_god_detail,
         )
         stats = get_local_model_stats()
         breakdown = get_local_model_breakdown()
         sessions = get_local_model_sessions(limit=12)
         conn = self._check_connection()
-        self.app.call_from_thread(self._apply, stats, breakdown, sessions, conn)
+        poseidon_data = get_god_detail("Poseidon")
+        self.app.call_from_thread(self._apply, stats, breakdown, sessions, conn, poseidon_data)
 
     def _check_connection(self) -> dict:
         """Check LM Studio connection status."""
@@ -253,11 +287,13 @@ class LocalModelsView(ScrollableContainer):
         except Exception as e:
             return {"online": False, "url": base_url, "error": str(e)[:60]}
 
-    def _apply(self, stats, breakdown, sessions, conn):
+    def _apply(self, stats, breakdown, sessions, conn, poseidon_data):
         self.query_one("#conn-status", ConnectionStatus).status = conn
         self.query_one("#local-stats", LocalStats).stats = stats
         self.query_one("#local-breakdown", LocalModelBreakdown).models = breakdown
         self.query_one("#local-sessions", RecentLocalSessions).sessions = sessions
+        if poseidon_data:
+            self.query_one("#poseidon-portrait", PoseidonPortrait).god_data = poseidon_data
 
     def on_show(self) -> None:
         self.load_data()

@@ -835,3 +835,72 @@ def get_skin_notifications_config() -> Dict[str, str]:
         return skin.notifications if skin.notifications else {}
     except Exception:
         return {}
+
+
+def get_gods_with_pixel_art() -> List[Dict[str, Any]]:
+    """Get all gods with their pixel art, lore, abilities, and quotes.
+    
+    Returns list of god data dicts with:
+    - name, icon, face, title, domain, color
+    - pixel_art (braille art string)
+    - lore (backstory text)
+    - abilities (list of power descriptions)
+    - quotes (list of divine quotes)
+    """
+    try:
+        _ensure_skin_loaded()
+        from hermes_cli.skin_engine import get_active_skin
+        skin = get_active_skin()
+        pantheon = skin.pantheon if skin.pantheon else []
+        
+        gods_data = []
+        for god in pantheon:
+            god_name = god.get("name", "Unknown")
+            
+            god_data = {
+                "name": god_name,
+                "icon": god.get("icon", "✦"),
+                "face": god.get("face", "(-_-)"),
+                "title": god.get("title", ""),
+                "domain": god.get("domain", ""),
+                "color": skin.get_god_color(god_name) if hasattr(skin, 'get_god_color') else "#FFD700",
+                "pixel_art": skin.get_god_pixel_art(god_name) if hasattr(skin, 'get_god_pixel_art') else "",
+                "lore": skin.get_god_lore(god_name) if hasattr(skin, 'get_god_lore') else "",
+                "abilities": skin.get_god_abilities(god_name) if hasattr(skin, 'get_god_abilities') else [],
+                "quotes": skin.get_god_quotes(god_name) if hasattr(skin, 'get_god_quotes') else [],
+            }
+            gods_data.append(god_data)
+        
+        return gods_data
+    except Exception:
+        return []
+
+
+def get_god_detail(god_name: str) -> Dict[str, Any]:
+    """Get detailed information for a specific god.
+    
+    Returns dict with all god data including pixel art, lore, abilities, quotes.
+    """
+    try:
+        _ensure_skin_loaded()
+        from hermes_cli.skin_engine import get_active_skin
+        skin = get_active_skin()
+        pantheon = skin.pantheon if skin.pantheon else []
+        
+        for god in pantheon:
+            if god.get("name") == god_name:
+                return {
+                    "name": god_name,
+                    "icon": god.get("icon", "✦"),
+                    "face": god.get("face", "(-_-)"),
+                    "title": god.get("title", ""),
+                    "domain": god.get("domain", ""),
+                    "color": skin.get_god_color(god_name) if hasattr(skin, 'get_god_color') else "#FFD700",
+                    "pixel_art": skin.get_god_pixel_art(god_name) if hasattr(skin, 'get_god_pixel_art') else "",
+                    "lore": skin.get_god_lore(god_name) if hasattr(skin, 'get_god_lore') else "",
+                    "abilities": skin.get_god_abilities(god_name) if hasattr(skin, 'get_god_abilities') else [],
+                    "quotes": skin.get_god_quotes(god_name) if hasattr(skin, 'get_god_quotes') else [],
+                }
+        return {}
+    except Exception:
+        return {}

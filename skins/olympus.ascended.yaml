@@ -576,23 +576,62 @@ pantheon_style: strip
 
 # Tool → God mapping for execution lanes
 tool_god_mapping:
+  # Ares - War God - Terminal/Shell operations
   terminal: Ares
   bash: Ares
+  process: Ares
+  
+  # Artemis - Huntress - Search/Retrieval
   web_search: Artemis
   web_extract: Artemis
+  web_crawl: Artemis
+  search_files: Artemis
+  file_search: Artemis
+  session_search: Artemis
+  
+  # Hephaestus - Smith God - File operations/Creation
+  read_file: Hephaestus
+  write_file: Hephaestus
+  patch: Hephaestus
   file_read: Hephaestus
   file_write: Hephaestus
-  file_search: Artemis
   file_patch: Hephaestus
-  browser_navigate: Poseidon
-  browser_screenshot: Poseidon
   execute_code: Hephaestus
+  image_generate: Hephaestus
+  
+  # Poseidon - Sea God - Browser/Network
+  browser_navigate: Poseidon
+  browser_snapshot: Poseidon
+  browser_click: Poseidon
+  browser_type: Poseidon
+  browser_scroll: Poseidon
+  browser_screenshot: Poseidon
+  mcp_call: Poseidon
+  
+  # Hermes - Messenger - Delegation/Communication
   delegate: Hermes
+  delegate_task: Hermes
+  send_message: Hermes
+  text_to_speech: Hermes
+  
+  # Hades - Underworld - Memory/Storage
+  memory: Hades
   memory_store: Hades
   memory_search: Hades
+  
+  # Athena - Wisdom - Planning/Reasoning
   todo: Athena
   think: Athena
-  mcp_call: Poseidon
+  mixture_of_agents: Athena
+  
+  # Apollo - Sun God - Vision/Analysis
+  vision_analyze: Apollo
+  browser_vision: Apollo
+  
+  # Dionysus - Wine God - Creative/Skills
+  skills_list: Dionysus
+  skill_view: Dionysus
+  cronjob: Dionysus
 
 # Execution lanes with god assignments
 execution_lanes:

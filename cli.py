@@ -5572,6 +5572,8 @@ class HermesCLI:
         Closes any open streaming boxes (reasoning / response) exactly once,
         then prints a short status line so the user sees activity instead of
         a frozen screen while a large payload (e.g. 45 KB write_file) streams.
+        
+        Shows the assigned god's face and animation when available (Olympus theme).
         """
         if getattr(self, "_stream_box_opened", False):
             self._flush_stream()
@@ -5580,7 +5582,41 @@ class HermesCLI:
 
         from agent.display import get_tool_emoji
         emoji = get_tool_emoji(tool_name, default="⚡")
-        _cprint(f"  ┊ {emoji} preparing {tool_name}…")
+        
+        # Try to get god info for this tool from the active skin
+        god_display = ""
+        try:
+            from hermes_cli.skin_engine import get_active_skin
+            skin = get_active_skin()
+            if skin:
+                god_name = skin.get_god_for_tool(tool_name)
+                if god_name:
+                    god = skin.get_god_by_name(god_name)
+                    if god:
+                        god_icon = god.get("icon", "✦")
+                        god_face = god.get("face", "")
+                        god_color = god.get("color", "#FFD700")
+                        # Get active animation frame (first frame)
+                        anim = skin.get_god_active_animation(god_name)
+                        anim_frame = anim[0] if anim else ""
+                        # Build god display with color
+                        if god_face:
+                            god_display = f" [{god_color}]{god_icon} {god_face} {god_name.upper()}[/]"
+                            if anim_frame:
+                                god_display += f" [{god_color}]{anim_frame}[/]"
+        except Exception:
+            pass  # Never break the CLI over god display
+        
+        if god_display:
+            # Rich markup for colored god display
+            from rich.console import Console
+            from rich.text import Text
+            console = Console(highlight=False)
+            with console.capture() as capture:
+                console.print(f"  ┊ {emoji} preparing {tool_name}…{god_display}", end="")
+            _cprint(capture.get())
+        else:
+            _cprint(f"  ┊ {emoji} preparing {tool_name}…")
 
     # ====================================================================
     # Tool progress callback (audio cues for voice mode)
@@ -5604,7 +5640,24 @@ class HermesCLI:
             _pl = get_tool_preview_max_len()
             if _pl > 0 and len(label) > _pl:
                 label = label[:_pl - 3] + "..."
-            self._spinner_text = f"{emoji} {label}"
+            
+            # Try to get god info for spinner display
+            god_tag = ""
+            try:
+                from hermes_cli.skin_engine import get_active_skin
+                skin = get_active_skin()
+                if skin:
+                    god_name = skin.get_god_for_tool(function_name)
+                    if god_name:
+                        god = skin.get_god_by_name(god_name)
+                        if god:
+                            god_icon = god.get("icon", "✦")
+                            god_face = god.get("face", "")
+                            god_tag = f" {god_icon}{god_face}" if god_face else f" {god_icon}"
+            except Exception:
+                pass
+            
+            self._spinner_text = f"{emoji} {label}{god_tag}"
             self._invalidate()
 
             is_delegate = function_name == "delegate_task"
@@ -5614,6 +5667,7 @@ class HermesCLI:
                 "preview": preview or function_name,
                 "time": time.time(),
                 "delegate": delegate_name,
+                "god": god_tag.strip() if god_tag else None,
             })
 
         if not self._voice_mode:

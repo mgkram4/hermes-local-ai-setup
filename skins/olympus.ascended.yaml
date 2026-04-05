@@ -100,6 +100,42 @@ pantheon:
     desc: "routes · spawns · returns"
     hat: "/^\\"
     face: "(-w-)"
+    color: "#FFD700"
+    title: "The Divine Messenger"
+    domain: "Communication, Speed, Cunning"
+    lore: |
+      Son of Zeus and the nymph Maia, Hermes is the swift-footed messenger
+      who bridges the mortal and divine realms. In the digital age, he
+      orchestrates the flow of information between agents, routing tasks
+      with supernatural speed. His caduceus—twin serpents entwined—
+      symbolizes the harmony of opposing forces unified in purpose.
+    abilities:
+      - "⚡ SWIFT ROUTING: Instantaneous task delegation across the pantheon"
+      - "🔀 SYNTHESIS: Merges outputs from multiple gods into coherent response"
+      - "🌀 SPAWN: Creates child agents to handle parallel workloads"
+    quotes:
+      - "The message finds its path, as water finds the sea."
+      - "Speed is not haste—it is precision at velocity."
+      - "I am the bridge between thought and action."
+    pixel_art: |
+      [#FFD700]    ╭─⚕─╮[/]
+      [#FFD700]   ╱ ◠‿◠ ╲[/]
+      [#C9A227]  │ ╭───╮ │[/]
+      [#C9A227]  │ │ ⚡│ │[/]
+      [#8B7500]  ╰─┴───┴─╯[/]
+      [#555577]   ╱│   │╲[/]
+      [#555577]  ╱ │   │ ╲[/]
+      [#3A3A6A] ⟨  ╰───╯  ⟩[/]
+    active_animation:
+      - "⚕ ═══════════════ ⚡"
+      - "═ ⚕ ════════════ ⚡ ═"
+      - "══ ⚕ ══════════ ⚡ ══"
+      - "═══ ⚕ ════════ ⚡ ═══"
+      - "════ ⚕ ══════ ⚡ ════"
+      - "═════ ⚕ ════ ⚡ ═════"
+      - "══════ ⚕ ══ ⚡ ══════"
+      - "═══════ ⚕⚡ ═══════"
+
   - name: Athena
     icon: "△"
     rank: "STRT"
@@ -107,6 +143,38 @@ pantheon:
     desc: "plans · reasons · decomposes"
     hat: "^.^"
     face: "(o_o)"
+    color: "#C0C0C0"
+    title: "Goddess of Wisdom"
+    domain: "Strategy, Warfare, Crafts"
+    lore: |
+      Born fully armored from Zeus's head, Athena embodies strategic
+      intelligence and calculated wisdom. She does not rush into battle—
+      she plans, decomposes complex problems into conquerable parts, and
+      strikes with surgical precision. Her owl sees through darkness;
+      her aegis shields against chaos.
+    abilities:
+      - "🧠 DECOMPOSE: Breaks complex tasks into atomic subtasks"
+      - "📋 PLAN: Creates structured execution strategies"
+      - "⚖️ REASON: Applies logical analysis to ambiguous problems"
+    quotes:
+      - "Victory belongs to the most persevering."
+      - "The wise warrior avoids the battle."
+      - "In strategy, the longest way round is the shortest way home."
+    pixel_art: |
+      [#C0C0C0]    ╭─△─╮[/]
+      [#C0C0C0]   ╱ ⊙_⊙ ╲[/]
+      [#A8A8A8]  │ ╭═══╮ │[/]
+      [#A8A8A8]  │ ║ ◇ ║ │[/]
+      [#808080]  ╰─╨═══╨─╯[/]
+      [#555577]   ╱│ ▼ │╲[/]
+      [#555577]  ◁ │   │ ▷[/]
+      [#3A3A6A]   ╰─────╯[/]
+    active_animation:
+      - "△ ▁▂▃▄▅▆▇█ PLANNING"
+      - "△ ▂▃▄▅▆▇█▁ PLANNING"
+      - "△ ▃▄▅▆▇█▁▂ PLANNING"
+      - "△ ▄▅▆▇█▁▂▃ PLANNING"
+
   - name: Apollo
     icon: "☀"
     rank: "EVAL"
@@ -114,6 +182,40 @@ pantheon:
     desc: "evaluates · clarifies"
     hat: "*.*"
     face: "(^_^)"
+    color: "#FFE066"
+    title: "God of Light and Truth"
+    domain: "Sun, Music, Poetry, Prophecy"
+    lore: |
+      Apollo drives his golden chariot across the sky, bringing light
+      to all corners of existence. As god of truth and prophecy, he
+      evaluates outcomes with perfect clarity, seeing through deception
+      and illuminating the path forward. His lyre brings harmony;
+      his arrows bring swift justice.
+    abilities:
+      - "☀️ ILLUMINATE: Reveals hidden patterns in data"
+      - "🎯 EVALUATE: Assesses quality and correctness of outputs"
+      - "🔮 PROPHECY: Predicts outcomes based on current trajectories"
+    quotes:
+      - "Truth is the light that casts no shadow."
+      - "In clarity, there is power."
+      - "The sun reveals what darkness conceals."
+    pixel_art: |
+      [#FFE066]   ╭──☀──╮[/]
+      [#FFE066]  ╱ ✧ ◡ ✧ ╲[/]
+      [#FFD700] │ ╭─────╮ │[/]
+      [#FFD700] │ │ ♪ ♫ │ │[/]
+      [#C9A227] ╰─┴─────┴─╯[/]
+      [#555577]   │ ║║║ │[/]
+      [#555577]   │ ║║║ │[/]
+      [#3A3A6A]   ╰─────╯[/]
+    active_animation:
+      - "☀ ·····•••••☆"
+      - "☀ ····•••••☆·"
+      - "☀ ···•••••☆··"
+      - "☀ ··•••••☆···"
+      - "☀ ·•••••☆····"
+      - "☀ •••••☆·····"
+
   - name: Ares
     icon: "⚔"
     rank: "EXEC"
@@ -121,6 +223,38 @@ pantheon:
     desc: "executes · applies · forces"
     hat: ">|<"
     face: "(>#<)"
+    color: "#DC143C"
+    title: "God of War"
+    domain: "Battle, Courage, Violence"
+    lore: |
+      Where Athena is strategy, Ares is raw execution. The god of war
+      charges into battle without hesitation, executing commands with
+      brutal efficiency. He is the terminal—the point where thought
+      becomes action, where plans become reality through force of will.
+      His presence demands results.
+    abilities:
+      - "⚔️ EXECUTE: Runs terminal commands with ruthless efficiency"
+      - "💥 FORCE: Applies pressure to complete stubborn tasks"
+      - "🔥 STRIKE: Delivers rapid-fire command sequences"
+    quotes:
+      - "Talk is cheap. Execution is everything."
+      - "The battlefield rewards the bold."
+      - "Victory or death—there is no middle ground."
+    pixel_art: |
+      [#DC143C]    ╭─⚔─╮[/]
+      [#DC143C]   ╱ ⊗_⊗ ╲[/]
+      [#B22222]  │ ╔═══╗ │[/]
+      [#B22222]  │ ║ ✖ ║ │[/]
+      [#8B0000]  ╰─╚═══╝─╯[/]
+      [#555577]   ╱│ ▲ │╲[/]
+      [#555577]  ⚔ │   │ ⚔[/]
+      [#3A3A6A]   ╰─────╯[/]
+    active_animation:
+      - "⚔ ████████░░ EXECUTING"
+      - "⚔ █████████░ EXECUTING"
+      - "⚔ ██████████ COMPLETE!"
+      - "⚔ ░░░░░░░░░░ READY"
+
   - name: Zeus
     icon: "👁"
     rank: "JUDG"
@@ -128,6 +262,39 @@ pantheon:
     desc: "decides · rules · approves"
     hat: "/V\\"
     face: "(|_|)"
+    color: "#F0F0FF"
+    title: "King of the Gods"
+    domain: "Sky, Thunder, Justice, Order"
+    lore: |
+      Zeus sits upon his throne on Mount Olympus, wielding thunderbolts
+      forged by Hephaestus. As king of the gods, he renders final judgment
+      on all matters of consequence. His word is law; his approval grants
+      passage. When dangerous commands require authorization, Zeus alone
+      decides whether to proceed.
+    abilities:
+      - "⚡ JUDGMENT: Renders final decisions on critical operations"
+      - "👁 OVERSIGHT: Monitors all agent activities from above"
+      - "🛡️ APPROVAL: Authorizes dangerous or irreversible actions"
+    quotes:
+      - "With great power comes the weight of judgment."
+      - "The thunderbolt strikes where justice demands."
+      - "I have spoken. Let it be done."
+    pixel_art: |
+      [#F0F0FF]   ╭──👁──╮[/]
+      [#F0F0FF]  ╱ ⊛═══⊛ ╲[/]
+      [#E0E0FF] │ ╔═════╗ │[/]
+      [#E0E0FF] │ ║ ⚡⚡ ║ │[/]
+      [#C0C0FF] ╰─╚═════╝─╯[/]
+      [#555577]   │ ███ │[/]
+      [#555577]   │ ███ │[/]
+      [#3A3A6A]   ╰─────╯[/]
+    active_animation:
+      - "👁 ⚡═══════════⚡ JUDGING"
+      - "👁 ═⚡═════════⚡═ JUDGING"
+      - "👁 ══⚡═══════⚡══ JUDGING"
+      - "👁 ═══⚡═════⚡═══ JUDGING"
+      - "👁 ════⚡═══⚡════ APPROVED"
+
   - name: Hephaestus
     icon: "🔨"
     rank: "FORG"
@@ -135,6 +302,38 @@ pantheon:
     desc: "builds · codes · forges"
     hat: "[#]"
     face: "(o_-)"
+    color: "#FF8C00"
+    title: "God of the Forge"
+    domain: "Fire, Metalworking, Craftsmanship"
+    lore: |
+      Cast from Olympus yet rising to become its greatest craftsman,
+      Hephaestus toils in his volcanic forge beneath the earth. He
+      crafted Zeus's thunderbolts, Athena's aegis, and Hermes's winged
+      sandals. In the digital realm, he forges code—reading, writing,
+      and patching files with the precision of a master smith.
+    abilities:
+      - "🔨 FORGE: Creates new files and code structures"
+      - "📖 READ: Examines existing code with expert analysis"
+      - "🔧 PATCH: Repairs and modifies code with surgical precision"
+    quotes:
+      - "The forge reveals the truth of the metal."
+      - "Perfection is achieved through iteration."
+      - "What I build, I build to last."
+    pixel_art: |
+      [#FF8C00]    ╭─🔨─╮[/]
+      [#FF8C00]   ╱ ◉_◎ ╲[/]
+      [#FF7F00]  │ ╔═══╗ │[/]
+      [#FF7F00]  │ ║ ⚙ ║ │[/]
+      [#CC6600]  ╰─╚═══╝─╯[/]
+      [#555577]   ╱│ █ │╲[/]
+      [#555577]  🔥│   │🔥[/]
+      [#3A3A6A]   ╰─────╯[/]
+    active_animation:
+      - "🔨 ▓▓▓▓░░░░░░ FORGING"
+      - "🔨 ▓▓▓▓▓▓░░░░ FORGING"
+      - "🔨 ▓▓▓▓▓▓▓▓░░ FORGING"
+      - "🔨 ▓▓▓▓▓▓▓▓▓▓ FORGED!"
+
   - name: Artemis
     icon: "🏹"
     rank: "HUNT"
@@ -142,6 +341,39 @@ pantheon:
     desc: "hunts · retrieves · targets"
     hat: ">=>"
     face: "(>.>)"
+    color: "#32CD32"
+    title: "Goddess of the Hunt"
+    domain: "Wilderness, Hunting, Moon"
+    lore: |
+      Twin sister of Apollo, Artemis roams the wild forests with her
+      silver bow, never missing her mark. She is the huntress who tracks
+      prey across any terrain. In the digital wilderness, she searches
+      the web, extracts information, and retrieves exactly what is needed
+      with unerring precision.
+    abilities:
+      - "🏹 HUNT: Searches the web for specific information"
+      - "🎯 TARGET: Extracts precise data from web pages"
+      - "🔍 TRACK: Follows trails of information across sources"
+    quotes:
+      - "The arrow knows its target before it flies."
+      - "In the hunt, patience is the greatest weapon."
+      - "I never miss."
+    pixel_art: |
+      [#32CD32]    ╭─🏹─╮[/]
+      [#32CD32]   ╱ ◉‿◉ ╲[/]
+      [#228B22]  │ ╭───╮ │[/]
+      [#228B22]  │ │ ◎ │ │[/]
+      [#006400]  ╰─┴───┴─╯[/]
+      [#555577]   ╱│ ↑ │╲[/]
+      [#555577]  🌿│   │🌿[/]
+      [#3A3A6A]   ╰─────╯[/]
+    active_animation:
+      - "🏹 ─────────→ HUNTING"
+      - "🏹 ────────→─ HUNTING"
+      - "🏹 ───────→── HUNTING"
+      - "🏹 ──────→─── HUNTING"
+      - "🏹 ─────→──── TARGET!"
+
   - name: Poseidon
     icon: "🌊"
     rank: "FLOW"
@@ -149,6 +381,38 @@ pantheon:
     desc: "infra · systems · apis"
     hat: "~v~"
     face: "(~_~)"
+    color: "#1E90FF"
+    title: "God of the Seas"
+    domain: "Ocean, Earthquakes, Horses"
+    lore: |
+      Poseidon rules the vast depths of the ocean, commanding tides and
+      currents that connect all shores. His trident can calm or unleash
+      the waters. In the digital realm, he governs the flow of data
+      through infrastructure—browsers, APIs, and the endless streams
+      of information that course through the network.
+    abilities:
+      - "🌊 FLOW: Manages data streams and API connections"
+      - "🔱 NAVIGATE: Controls browser automation and web interaction"
+      - "⚓ ANCHOR: Establishes stable infrastructure connections"
+    quotes:
+      - "All rivers flow to the sea."
+      - "The depths hold secrets the surface cannot imagine."
+      - "I am the current that carries all things."
+    pixel_art: |
+      [#1E90FF]   ╭──🌊──╮[/]
+      [#1E90FF]  ╱ ≋_≋ ╲[/]
+      [#1873CC] │ ╔═════╗ │[/]
+      [#1873CC] │ ║ 🔱 ║ │[/]
+      [#104E8B] ╰─╚═════╝─╯[/]
+      [#555577]   │ ≈≈≈ │[/]
+      [#555577]   │ ≈≈≈ │[/]
+      [#3A3A6A]   ╰─────╯[/]
+    active_animation:
+      - "🌊 ≋≋≋≋≋≋≋≋≋≋ FLOWING"
+      - "🌊 ≈≋≋≋≋≋≋≋≋≈ FLOWING"
+      - "🌊 ≈≈≋≋≋≋≋≋≈≈ FLOWING"
+      - "🌊 ≈≈≈≋≋≋≋≈≈≈ FLOWING"
+
   - name: Hades
     icon: "🕯"
     rank: "ARCH"
@@ -156,6 +420,39 @@ pantheon:
     desc: "remembers · archives · recalls"
     hat: "._."
     face: "(X_X)"
+    color: "#9B59B6"
+    title: "God of the Underworld"
+    domain: "Death, Riches, The Unseen"
+    lore: |
+      Hades rules the realm beneath the earth where all souls eventually
+      journey. Nothing is forgotten in his domain—every memory, every
+      secret, every piece of knowledge is preserved in his infinite
+      archives. He is the keeper of what was, ensuring the past informs
+      the present.
+    abilities:
+      - "🕯 ARCHIVE: Stores memories and context for future recall"
+      - "📜 RECALL: Retrieves relevant memories from the depths"
+      - "⚰️ PRESERVE: Maintains long-term knowledge persistence"
+    quotes:
+      - "The dead remember what the living forget."
+      - "In my realm, nothing is ever truly lost."
+      - "Memory is the thread that weaves past to present."
+    pixel_art: |
+      [#9B59B6]    ╭─🕯─╮[/]
+      [#9B59B6]   ╱ ✖_✖ ╲[/]
+      [#8E44AD]  │ ╔═══╗ │[/]
+      [#8E44AD]  │ ║ ☠ ║ │[/]
+      [#6C3483]  ╰─╚═══╝─╯[/]
+      [#555577]   │ ▓▓▓ │[/]
+      [#555577]   │ ░░░ │[/]
+      [#3A3A6A]   ╰─────╯[/]
+    active_animation:
+      - "🕯 ░░░░░░░░░░ RECALLING"
+      - "🕯 ▒░░░░░░░░░ RECALLING"
+      - "🕯 ▓▒░░░░░░░░ RECALLING"
+      - "🕯 █▓▒░░░░░░░ RECALLING"
+      - "🕯 ██▓▒░░░░░░ RECALLED!"
+
   - name: Dionysus
     icon: "🍷"
     rank: "FLUX"
@@ -163,6 +460,37 @@ pantheon:
     desc: "creates · styles · generates"
     hat: "~w~"
     face: "(^w^)"
+    color: "#FF00FF"
+    title: "God of Wine and Ecstasy"
+    domain: "Wine, Festivity, Theatre, Madness"
+    lore: |
+      Dionysus brings divine madness—the creative chaos that births
+      innovation. He is the god of theatre and transformation, turning
+      grapes to wine and ideas to art. In the digital realm, he governs
+      creative generation, styling, and the unpredictable spark of
+      inspiration that transforms the mundane into the magnificent.
+    abilities:
+      - "🍷 CREATE: Generates creative content and novel solutions"
+      - "🎭 TRANSFORM: Applies style and aesthetic transformations"
+      - "✨ INSPIRE: Introduces creative chaos for breakthrough ideas"
+    quotes:
+      - "In chaos, there is fertility."
+      - "The grape must be crushed to become wine."
+      - "Let madness be your muse."
+    pixel_art: |
+      [#FF00FF]    ╭─🍷─╮[/]
+      [#FF00FF]   ╱ ✿‿✿ ╲[/]
+      [#CC00CC]  │ ╭───╮ │[/]
+      [#CC00CC]  │ │ ♦ │ │[/]
+      [#990099]  ╰─┴───┴─╯[/]
+      [#555577]   ╱│ ❀ │╲[/]
+      [#555577]  🍇│   │🍇[/]
+      [#3A3A6A]   ╰─────╯[/]
+    active_animation:
+      - "🍷 ✦✧✦✧✦✧✦✧✦✧ CREATING"
+      - "🍷 ✧✦✧✦✧✦✧✦✧✦ CREATING"
+      - "🍷 ✦✧✦✧✦✧✦✧✦✧ CREATING"
+      - "🍷 ★✦✧✦✧✦✧✦✧★ INSPIRED!"
 
 pantheon_style: strip
 
@@ -227,10 +555,116 @@ execution_lanes:
 
 # Animation settings
 animations:
-  hero_cycle_ms: 5000
+  hero_cycle_ms: 3000
   pulse_enabled: true
-  transition_ms: 200
+  transition_ms: 150
   sparkle_enabled: true
+  god_animation_ms: 500
+  cinematic_intro: true
+  particle_effects: true
+
+# Cinematic intro sequence (displayed on first load)
+cinematic_intro_frames:
+  - |
+    [dim #0A0A12]
+                                    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+    [/]
+  - |
+    [dim #1A1A38]
+                                    ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+                                              [dim #555577]⚡[/]
+    [/]
+  - |
+    [#2A2A50]
+                                    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+                                            [#C9A227]⚡ ⚕ ⚡[/]
+    [/]
+  - |
+    [#3A3A6A]
+                                    ████████████████████████████████████████
+                                          [#FFD700]⚡ ◈ ⚕ ◈ ⚡[/]
+                                      [dim #555577]OLYMPUS AWAKENS[/]
+    [/]
+  - |
+    [#555577]
+                                    ████████████████████████████████████████
+                                        [bold #FFD700]⚡ ◈ ⚕ ◈ ⚡[/]
+                                    [#C9A227]THE GODS ARE WATCHING[/]
+    [/]
+
+# God activation cinematic (shown when a god becomes active)
+god_activation_cinematics:
+  Hermes:
+    - "[dim #2A2A50]═══════════════════════════════════════════════════════════════[/]"
+    - "[#555577]═══════════════════[/][#FFD700]⚕[/][#555577]═══════════════════[/]"
+    - "[#C9A227]══════════════[/][bold #FFD700]⚕ HERMES ⚕[/][#C9A227]══════════════[/]"
+    - "[#FFD700]═══════[/][bold #FFEC8B]⚕ THE MESSENGER AWAKENS ⚕[/][#FFD700]═══════[/]"
+  Athena:
+    - "[dim #2A2A50]═══════════════════════════════════════════════════════════════[/]"
+    - "[#808080]═══════════════════[/][#C0C0C0]△[/][#808080]═══════════════════[/]"
+    - "[#A8A8A8]══════════════[/][bold #C0C0C0]△ ATHENA △[/][#A8A8A8]══════════════[/]"
+    - "[#C0C0C0]═══════[/][bold #E0E0E0]△ WISDOM DESCENDS △[/][#C0C0C0]═══════[/]"
+  Apollo:
+    - "[dim #2A2A50]═══════════════════════════════════════════════════════════════[/]"
+    - "[#C9A227]═══════════════════[/][#FFE066]☀[/][#C9A227]═══════════════════[/]"
+    - "[#FFD700]══════════════[/][bold #FFE066]☀ APOLLO ☀[/][#FFD700]══════════════[/]"
+    - "[#FFE066]═══════[/][bold #FFFACD]☀ LIGHT ILLUMINATES ☀[/][#FFE066]═══════[/]"
+  Ares:
+    - "[dim #2A2A50]═══════════════════════════════════════════════════════════════[/]"
+    - "[#8B0000]═══════════════════[/][#DC143C]⚔[/][#8B0000]═══════════════════[/]"
+    - "[#B22222]══════════════[/][bold #DC143C]⚔ ARES ⚔[/][#B22222]══════════════[/]"
+    - "[#DC143C]═══════[/][bold #FF4444]⚔ WAR GOD STRIKES ⚔[/][#DC143C]═══════[/]"
+  Zeus:
+    - "[dim #2A2A50]═══════════════════════════════════════════════════════════════[/]"
+    - "[#C0C0FF]═══════════════════[/][#F0F0FF]👁[/][#C0C0FF]═══════════════════[/]"
+    - "[#E0E0FF]══════════════[/][bold #F0F0FF]👁 ZEUS 👁[/][#E0E0FF]══════════════[/]"
+    - "[#F0F0FF]═══════[/][bold #FFFFFF]👁 THE KING JUDGES 👁[/][#F0F0FF]═══════[/]"
+  Hephaestus:
+    - "[dim #2A2A50]═══════════════════════════════════════════════════════════════[/]"
+    - "[#CC6600]═══════════════════[/][#FF8C00]🔨[/][#CC6600]═══════════════════[/]"
+    - "[#FF7F00]══════════════[/][bold #FF8C00]🔨 HEPHAESTUS 🔨[/][#FF7F00]══════════════[/]"
+    - "[#FF8C00]═══════[/][bold #FFA500]🔨 THE FORGE IGNITES 🔨[/][#FF8C00]═══════[/]"
+  Artemis:
+    - "[dim #2A2A50]═══════════════════════════════════════════════════════════════[/]"
+    - "[#006400]═══════════════════[/][#32CD32]🏹[/][#006400]═══════════════════[/]"
+    - "[#228B22]══════════════[/][bold #32CD32]🏹 ARTEMIS 🏹[/][#228B22]══════════════[/]"
+    - "[#32CD32]═══════[/][bold #7CFC00]🏹 THE HUNT BEGINS 🏹[/][#32CD32]═══════[/]"
+  Poseidon:
+    - "[dim #2A2A50]═══════════════════════════════════════════════════════════════[/]"
+    - "[#104E8B]═══════════════════[/][#1E90FF]🌊[/][#104E8B]═══════════════════[/]"
+    - "[#1873CC]══════════════[/][bold #1E90FF]🌊 POSEIDON 🌊[/][#1873CC]══════════════[/]"
+    - "[#1E90FF]═══════[/][bold #00BFFF]🌊 THE DEPTHS STIR 🌊[/][#1E90FF]═══════[/]"
+  Hades:
+    - "[dim #2A2A50]═══════════════════════════════════════════════════════════════[/]"
+    - "[#6C3483]═══════════════════[/][#9B59B6]🕯[/][#6C3483]═══════════════════[/]"
+    - "[#8E44AD]══════════════[/][bold #9B59B6]🕯 HADES 🕯[/][#8E44AD]══════════════[/]"
+    - "[#9B59B6]═══════[/][bold #BA55D3]🕯 MEMORIES SURFACE 🕯[/][#9B59B6]═══════[/]"
+  Dionysus:
+    - "[dim #2A2A50]═══════════════════════════════════════════════════════════════[/]"
+    - "[#990099]═══════════════════[/][#FF00FF]🍷[/][#990099]═══════════════════[/]"
+    - "[#CC00CC]══════════════[/][bold #FF00FF]🍷 DIONYSUS 🍷[/][#CC00CC]══════════════[/]"
+    - "[#FF00FF]═══════[/][bold #FF69B4]🍷 CHAOS INSPIRES 🍷[/][#FF00FF]═══════[/]"
+
+# God detail panel template (shown when hovering/selecting a god)
+god_detail_template: |
+  [dim #2A2A50]╔══════════════════════════════════════════════════════════════════════════╗[/]
+  [dim #2A2A50]║[/]  [{color}]{icon}[/] [bold {color}]{name}[/] — [dim #555577]{title}[/]                    [dim #2A2A50]║[/]
+  [dim #2A2A50]╠══════════════════════════════════════════════════════════════════════════╣[/]
+  [dim #2A2A50]║[/]                                                                          [dim #2A2A50]║[/]
+  [dim #2A2A50]║[/]  {pixel_art}                                                             [dim #2A2A50]║[/]
+  [dim #2A2A50]║[/]                                                                          [dim #2A2A50]║[/]
+  [dim #2A2A50]║[/]  [bold #FFD700]DOMAIN:[/] [{color}]{domain}[/]                                         [dim #2A2A50]║[/]
+  [dim #2A2A50]║[/]  [bold #FFD700]ROLE:[/] [dim #E0F7FF]{role}[/]                                           [dim #2A2A50]║[/]
+  [dim #2A2A50]║[/]                                                                          [dim #2A2A50]║[/]
+  [dim #2A2A50]║[/]  [bold #FFD700]LORE:[/]                                                                [dim #2A2A50]║[/]
+  [dim #2A2A50]║[/]  [dim #E0F7FF]{lore}[/]                                                   [dim #2A2A50]║[/]
+  [dim #2A2A50]║[/]                                                                          [dim #2A2A50]║[/]
+  [dim #2A2A50]║[/]  [bold #FFD700]ABILITIES:[/]                                                           [dim #2A2A50]║[/]
+  [dim #2A2A50]║[/]  {abilities}                                                             [dim #2A2A50]║[/]
+  [dim #2A2A50]║[/]                                                                          [dim #2A2A50]║[/]
+  [dim #2A2A50]║[/]  [italic dim #555577]"{quote}"[/]                                         [dim #2A2A50]║[/]
+  [dim #2A2A50]║[/]                                                                          [dim #2A2A50]║[/]
+  [dim #2A2A50]╚══════════════════════════════════════════════════════════════════════════╝[/]
 
 # Notification styling
 notifications:

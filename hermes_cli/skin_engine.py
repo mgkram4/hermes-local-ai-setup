@@ -132,6 +132,10 @@ class SkinConfig:
     dashboard: Dict[str, Any] = field(default_factory=dict)  # dashboard-specific settings
     hero_frames: List[str] = field(default_factory=list)  # animation frames for hero art
     flow_diagram: str = ""  # flow diagram template
+    # Cinematic features
+    cinematic_intro_frames: List[str] = field(default_factory=list)  # intro animation frames
+    god_activation_cinematics: Dict[str, List[str]] = field(default_factory=dict)  # per-god activation animations
+    god_detail_template: str = ""  # template for god detail panels
 
     def get_color(self, key: str, fallback: str = "") -> str:
         """Get a color value with fallback."""
@@ -175,6 +179,50 @@ class SkinConfig:
     def get_animation_setting(self, key: str, fallback: Any = None) -> Any:
         """Get an animation setting with fallback."""
         return self.animations.get(key, fallback)
+
+    def get_god_lore(self, god_name: str) -> Optional[str]:
+        """Get the lore/backstory for a god."""
+        god = self.get_god_by_name(god_name)
+        return god.get("lore") if god else None
+
+    def get_god_pixel_art(self, god_name: str) -> Optional[str]:
+        """Get the pixel art for a god."""
+        god = self.get_god_by_name(god_name)
+        return god.get("pixel_art") if god else None
+
+    def get_god_abilities(self, god_name: str) -> List[str]:
+        """Get the abilities list for a god."""
+        god = self.get_god_by_name(god_name)
+        return god.get("abilities", []) if god else []
+
+    def get_god_quotes(self, god_name: str) -> List[str]:
+        """Get the quotes list for a god."""
+        god = self.get_god_by_name(god_name)
+        return god.get("quotes", []) if god else []
+
+    def get_god_active_animation(self, god_name: str) -> List[str]:
+        """Get the active animation frames for a god."""
+        god = self.get_god_by_name(god_name)
+        return god.get("active_animation", []) if god else []
+
+    def get_god_activation_cinematic(self, god_name: str) -> List[str]:
+        """Get the activation cinematic frames for a god."""
+        return self.god_activation_cinematics.get(god_name, [])
+
+    def get_god_color(self, god_name: str) -> str:
+        """Get the primary color for a god."""
+        god = self.get_god_by_name(god_name)
+        return god.get("color", "#FFD700") if god else "#FFD700"
+
+    def get_god_title(self, god_name: str) -> str:
+        """Get the title for a god."""
+        god = self.get_god_by_name(god_name)
+        return god.get("title", "") if god else ""
+
+    def get_god_domain(self, god_name: str) -> str:
+        """Get the domain for a god."""
+        god = self.get_god_by_name(god_name)
+        return god.get("domain", "") if god else ""
 
     def get_dashboard_setting(self, key: str, fallback: Any = None) -> Any:
         """Get a dashboard setting with fallback."""
@@ -602,6 +650,10 @@ def _build_skin_config(data: Dict[str, Any]) -> SkinConfig:
         dashboard=data.get("dashboard", {}),
         hero_frames=data.get("hero_frames", []),
         flow_diagram=data.get("flow_diagram", ""),
+        # Cinematic features
+        cinematic_intro_frames=data.get("cinematic_intro_frames", []),
+        god_activation_cinematics=data.get("god_activation_cinematics", {}),
+        god_detail_template=data.get("god_detail_template", ""),
     )
 
 

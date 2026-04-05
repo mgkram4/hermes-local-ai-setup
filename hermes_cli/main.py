@@ -3239,6 +3239,179 @@ def _install_python_dependencies_with_optional_fallback(
         print(f"  ⚠ Skipped optional extras that still failed: {', '.join(failed_extras)}")
 
 
+def cmd_safe_update(args):
+    """Update Hermes with automatic config backup and restore.
+    
+    This command:
+    1. Backs up config.yaml, .env, skins/, skills/, MEMORY.md, USER.md, SOUL.md
+    2. Runs the standard hermes update
+    3. Restores config if it was overwritten
+    4. Runs config migration to add new fields
+    5. Keeps last 5 backups, cleans older ones
+    """
+    import shutil
+    from datetime import datetime
+    from hermes_constants import get_hermes_home
+    
+    hermes_home = get_hermes_home()
+    backup_dir = hermes_home / "backups"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_subdir = backup_dir / f"pre_update_{timestamp}"
+    
+    print("⚕ Hermes Safe Update")
+    print("━" * 70)
+    print()
+    
+    # ── Step 1: Create backup ────────────────────────────────────────────────
+    print("→ Creating backup...")
+    backup_subdir.mkdir(parents=True, exist_ok=True)
+    
+    backed_up = []
+    
+    # Backup config.yaml
+    config_file = hermes_home / "config.yaml"
+    if config_file.exists():
+        shutil.copy2(config_file, backup_subdir / "config.yaml")
+        backed_up.append("config.yaml")
+        print("  ✓ Backed up config.yaml")
+    
+    # Backup .env
+    env_file = hermes_home / ".env"
+    if env_file.exists():
+        shutil.copy2(env_file, backup_subdir / ".env")
+        backed_up.append(".env")
+        print("  ✓ Backed up .env")
+    
+    # Backup skins/
+    skins_dir = hermes_home / "skins"
+    if skins_dir.exists():
+        shutil.copytree(skins_dir, backup_subdir / "skins")
+        backed_up.append("skins/")
+        print("  ✓ Backed up skins/")
+    
+    # Backup skills/
+    skills_dir = hermes_home / "skills"
+    if skills_dir.exists():
+        shutil.copytree(skills_dir, backup_subdir / "skills")
+        backed_up.append("skills/")
+        print("  ✓ Backed up skills/")
+    
+    # Backup memory files
+    for mem_file in ["MEMORY.md", "USER.md", "SOUL.md"]:
+        mem_path = hermes_home / mem_file
+        if mem_path.exists():
+            shutil.copy2(mem_path, backup_subdir / mem_file)
+            backed_up.append(mem_file)
+            print(f"  ✓ Backed up {mem_file}")
+    
+    print()
+    print(f"✓ Backup saved to: {backup_subdir}")
+    print()
+    
+    # ── Step 2: Store config hash for comparison ─────────────────────────────
+    config_hash_before = None
+    if config_file.exists():
+        import hashlib
+        config_hash_before = hashlib.md5(config_file.read_bytes()).hexdigest()
+    
+    # ── Step 3: Run the actual update ────────────────────────────────────────
+    print("→ Running hermes update...")
+    print()
+    
+    update_success = False
+    try:
+        cmd_update(args)
+        update_success = True
+    except SystemExit as e:
+        if e.code == 0:
+            update_success = True
+        else:
+            print()
+            print("⚠ Update encountered issues (see above)")
+    except Exception as e:
+        print(f"✗ Update failed: {e}")
+    
+    print()
+    
+    # ── Step 4: Check if config was overwritten ──────────────────────────────
+    print("→ Verifying config preservation...")
+    
+    config_restored = False
+    if config_file.exists() and config_hash_before:
+        import hashlib
+        config_hash_after = hashlib.md5(config_file.read_bytes()).hexdigest()
+        
+        if config_hash_before != config_hash_after:
+            print("  ⚠ Config was modified during update")
+            print("  Restoring your custom config...")
+            backup_config = backup_subdir / "config.yaml"
+            if backup_config.exists():
+                shutil.copy2(backup_config, config_file)
+                config_restored = True
+                print("  ✓ Custom config restored")
+        else:
+            print("  ✓ Config unchanged (preserved)")
+    elif not config_file.exists() and (backup_subdir / "config.yaml").exists():
+        shutil.copy2(backup_subdir / "config.yaml", config_file)
+        config_restored = True
+        print("  ✓ Config restored from backup")
+    
+    # Restore .env if missing
+    if not env_file.exists() and (backup_subdir / ".env").exists():
+        shutil.copy2(backup_subdir / ".env", env_file)
+        print("  ✓ .env restored from backup")
+    
+    print()
+    
+    # ── Step 5: Run config migration ─────────────────────────────────────────
+    print("→ Checking for new config options...")
+    try:
+        from hermes_cli.config import migrate_config
+        migrate_config(interactive=False, quiet=True)
+        print("  ✓ Config migration complete")
+    except Exception as e:
+        print(f"  ⚠ Config migration skipped: {e}")
+    
+    print()
+    
+    # ── Step 6: Summary ──────────────────────────────────────────────────────
+    print("━" * 70)
+    print("⚕ Update Summary")
+    print()
+    
+    if update_success:
+        print("✓ Hermes updated successfully")
+    else:
+        print("⚠ Update had issues (check above)")
+    
+    if config_restored:
+        print("✓ Custom config was restored")
+    else:
+        print("✓ Custom config was preserved")
+    
+    print()
+    print(f"Backup location: {backup_subdir}")
+    print()
+    print("To restore manually if needed:")
+    print(f"  cp {backup_subdir}/config.yaml {config_file}")
+    print(f"  cp {backup_subdir}/.env {env_file}")
+    print()
+    
+    # ── Step 7: Cleanup old backups (keep last 5) ────────────────────────────
+    try:
+        backups = sorted(backup_dir.glob("pre_update_*"), key=lambda p: p.name, reverse=True)
+        if len(backups) > 5:
+            print("→ Cleaning old backups (keeping last 5)...")
+            for old_backup in backups[5:]:
+                shutil.rmtree(old_backup)
+            print(f"  ✓ Removed {len(backups) - 5} old backup(s)")
+            print()
+    except Exception:
+        pass  # Non-fatal
+    
+    print("Done!")
+
+
 def cmd_update(args):
     """Update Hermes Agent to the latest version."""
     import shutil
@@ -5339,6 +5512,16 @@ For more help on a command:
         help="Gateway mode: use file-based IPC for prompts instead of stdin (used internally by /update)"
     )
     update_parser.set_defaults(func=cmd_update)
+
+    # =========================================================================
+    # safe-update command
+    # =========================================================================
+    safe_update_parser = subparsers.add_parser(
+        "safe-update",
+        help="Update Hermes with automatic config backup/restore",
+        description="Backs up config.yaml, .env, skins, skills, and memory before updating, then restores if needed"
+    )
+    safe_update_parser.set_defaults(func=cmd_safe_update)
     
     # =========================================================================
     # uninstall command

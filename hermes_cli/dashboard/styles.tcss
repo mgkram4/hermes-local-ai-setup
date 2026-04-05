@@ -1,4 +1,9 @@
-/* OLYMPUS DASHBOARD — Bento Box Grid Theme */
+/* OLYMPUS ASCENDED DASHBOARD — Divine Command Center Theme */
+/* Cinematic TUI aesthetic with glass morphism, divine panels, and animations */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CORE LAYOUT
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 Screen {
     background: #0A0A12;
@@ -8,13 +13,19 @@ Screen {
     display: none;
 }
 
-/* ─── View containers ─── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   VIEW CONTAINERS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 #view-assembly, #view-chronicle, #view-oracle,
 #view-tablets, #view-deepdive, #view-local, #view-switch {
     height: 1fr;
 }
 
-/* ─── Navigation tabs ─── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   NAVIGATION — Divine Header Bar
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 #nav-tabs {
     dock: top;
     height: 3;
@@ -67,7 +78,10 @@ Screen {
     color: #FFD700;
 }
 
-/* ─── Footer bar ─── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOOTER — Divine Status Bar
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 #footer-bar {
     dock: bottom;
     height: 1;
@@ -78,13 +92,19 @@ Screen {
     text-align: center;
 }
 
-/* ─── Main content ─── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   MAIN CONTENT AREA
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 #main-content {
     height: 1fr;
     padding: 0 1;
 }
 
-/* ─── Bento Box System ─── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   BENTO BOX SYSTEM — Core Grid Components
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 .bento {
     border: round #2A2A50;
     background: #0C0C18;
@@ -121,6 +141,106 @@ Screen {
     text-align: center;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   DIVINE PANELS — Enhanced Bento with Olympus Styling
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.divine-panel {
+    border: round #2A2A50;
+    background: #0C0C18;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    text-align: center;
+}
+
+.divine-panel:focus {
+    border: round #FFD700;
+}
+
+.divine-panel:hover {
+    border: round #3A3A6A;
+    background: #0E0E1C;
+}
+
+/* Divine panel with gold accent border */
+.divine-panel-gold {
+    border: double #C9A227;
+    background: #0C0C18;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    text-align: center;
+}
+
+.divine-panel-gold:hover {
+    border: double #FFD700;
+    background: #0E0E1C;
+}
+
+.divine-panel-gold:focus {
+    border: double #FFEC8B;
+}
+
+/* Divine panel with ethereal glow effect */
+.divine-panel-glow {
+    border: heavy #3A3A6A;
+    background: #0A0A14;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    text-align: center;
+}
+
+.divine-panel-glow:hover {
+    border: heavy #555599;
+    background: #0C0C1A;
+}
+
+.divine-panel-glow:focus {
+    border: heavy #FFD700;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GLASS MORPHISM PANELS — Translucent Divine Containers
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.glass-panel {
+    border: round #3A3A6A;
+    background: #0C0C1880;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    text-align: center;
+}
+
+.glass-panel:hover {
+    border: round #555599;
+    background: #0E0E1C90;
+}
+
+.glass-panel:focus {
+    border: round #FFD700;
+}
+
+/* Glass panel with gold tint */
+.glass-panel-gold {
+    border: round #4A4020;
+    background: #0C0C1880;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    text-align: center;
+}
+
+.glass-panel-gold:hover {
+    border: round #6A6030;
+    background: #0E0E1C90;
+}
+
+.glass-panel-gold:focus {
+    border: round #FFD700;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BENTO GRID LAYOUTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 .bento-row {
     layout: horizontal;
     height: auto;
@@ -156,6 +276,14 @@ Screen {
     margin: 0 0 1 0;
 }
 
+.bento-5col {
+    layout: grid;
+    grid-size: 5;
+    grid-gutter: 1;
+    height: auto;
+    margin: 0 0 1 0;
+}
+
 .bento-wide {
     column-span: 2;
 }
@@ -164,20 +292,10 @@ Screen {
     column-span: 4;
 }
 
-/* ─── Legacy panel compat ─── */
-.divine-panel {
-    border: round #2A2A50;
-    background: #0C0C18;
-    padding: 1 2;
-    margin: 0 0 1 0;
-    text-align: center;
-}
+/* ═══════════════════════════════════════════════════════════════════════════
+   GOD CARDS — Pantheon Member Display
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-.divine-panel:focus {
-    border: round #FFD700;
-}
-
-/* ─── Assembly view ─── */
 #pantheon-row {
     height: auto;
     min-height: 7;
@@ -202,6 +320,269 @@ Screen {
     background: #12122A;
 }
 
+.god-card:focus {
+    border: double #FFD700;
+    background: #14142E;
+}
+
+/* God card variants by domain */
+.god-card-strategy {
+    border: round #C0C0C0;
+    background: #0C0C18;
+}
+
+.god-card-strategy:hover {
+    border: round #E0E0E0;
+    background: #12122A;
+}
+
+.god-card-execution {
+    border: round #DC143C;
+    background: #0C0C18;
+}
+
+.god-card-execution:hover {
+    border: round #FF4444;
+    background: #12122A;
+}
+
+.god-card-retrieval {
+    border: round #32CD32;
+    background: #0C0C18;
+}
+
+.god-card-retrieval:hover {
+    border: round #44FF44;
+    background: #12122A;
+}
+
+.god-card-forge {
+    border: round #FF8C00;
+    background: #0C0C18;
+}
+
+.god-card-forge:hover {
+    border: round #FFA500;
+    background: #12122A;
+}
+
+.god-card-flow {
+    border: round #1E90FF;
+    background: #0C0C18;
+}
+
+.god-card-flow:hover {
+    border: round #4169E1;
+    background: #12122A;
+}
+
+.god-card-archive {
+    border: round #9B59B6;
+    background: #0C0C18;
+}
+
+.god-card-archive:hover {
+    border: round #B370CF;
+    background: #12122A;
+}
+
+/* Expanded god card for detail view */
+.god-card-expanded {
+    width: 2fr;
+    min-height: 10;
+    border: double #FFD700;
+    background: #0E0E1C;
+    padding: 1 2;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EXECUTION LANES — Divine Flow Visualization
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.exec-lanes {
+    border: round #2A2A50;
+    background: #0A0A14;
+    padding: 1 2;
+    margin: 0 0 1 0;
+}
+
+.exec-lanes:hover {
+    border: round #3A3A6A;
+}
+
+.exec-lane {
+    height: auto;
+    min-height: 2;
+    padding: 0 1;
+    margin: 0 0 0 0;
+}
+
+.exec-lane-active {
+    background: #12122A;
+}
+
+/* Lane color variants */
+.lane-strategy {
+    border-left: heavy #C0C0C0;
+}
+
+.lane-retrieval {
+    border-left: heavy #32CD32;
+}
+
+.lane-execution {
+    border-left: heavy #DC143C;
+}
+
+.lane-forge {
+    border-left: heavy #FF8C00;
+}
+
+.lane-flow {
+    border-left: heavy #1E90FF;
+}
+
+.lane-archive {
+    border-left: heavy #9B59B6;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FLOW DIAGRAM — Divine Orchestration Visualization
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.flow-diagram {
+    border: double #2A2A50;
+    background: #08080F;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    text-align: center;
+}
+
+.flow-diagram:hover {
+    border: double #3A3A6A;
+}
+
+.flow-node {
+    border: round #3A3A6A;
+    background: #0C0C18;
+    padding: 0 1;
+    margin: 0 1 0 0;
+}
+
+.flow-node-active {
+    border: round #FFD700;
+    background: #12122A;
+}
+
+.flow-arrow {
+    color: #555577;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NOTIFICATIONS — Divine Proclamations
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.notifications-panel {
+    border: round #2A2A50;
+    background: #0A0A14;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    max-height: 15;
+}
+
+.notification {
+    height: auto;
+    padding: 0 1;
+    margin: 0 0 0 0;
+}
+
+.notification-info {
+    border-left: heavy #00D4FF;
+}
+
+.notification-warn {
+    border-left: heavy #FFD700;
+}
+
+.notification-error {
+    border-left: heavy #FF4444;
+}
+
+.notification-success {
+    border-left: heavy #00FF99;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODEL STATUS — Quick Model Display
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#model-status {
+    height: auto;
+    min-height: 3;
+    border: double #3A3010;
+    background: #0A0A14;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    text-align: center;
+}
+
+#model-status:hover {
+    border: double #FFD700;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   QUICK STATS — Divine Metrics Row
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#quick-stats {
+    height: auto;
+    min-height: 3;
+    border: round #3A3010;
+    background: #0C0C18;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    text-align: center;
+}
+
+#quick-stats:hover {
+    border: round #FFD700;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COST TRACKER — Drachmai Widget
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cost-tracker {
+    border: round #3A3010;
+    background: #0A0A14;
+    padding: 1 2;
+    margin: 0 0 1 0;
+}
+
+.cost-tracker:hover {
+    border: round #FFD700;
+}
+
+.cost-daily {
+    color: #00FF99;
+}
+
+.cost-weekly {
+    color: #00D4FF;
+}
+
+.cost-monthly {
+    color: #FFD700;
+}
+
+.cost-total {
+    color: #FF4444;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ASSEMBLY VIEW — Main Dashboard
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 #bottom-row {
     layout: horizontal;
     height: auto;
@@ -217,7 +598,10 @@ Screen {
     width: 1fr;
 }
 
-/* ─── Inputs ─── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   INPUTS — Divine Text Entry
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 #search-input, #dive-input {
     width: 100%;
     background: #0C0C18;
@@ -257,7 +641,10 @@ Screen {
     border: round #FFD700;
 }
 
-/* ─── Oracle stat cards ─── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   ORACLE VIEW — Analytics Dashboard
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 .stat-card {
     width: 1fr;
     height: auto;
@@ -270,6 +657,15 @@ Screen {
     text-align: center;
 }
 
+.stat-card:hover {
+    border: round #3A3A6A;
+    background: #0E0E1C;
+}
+
+.stat-card:focus {
+    border: round #FFD700;
+}
+
 #stats-row {
     layout: horizontal;
     height: auto;
@@ -277,7 +673,162 @@ Screen {
     margin-bottom: 1;
 }
 
-/* ─── Scrollbar styling ─── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   QUICK ACTIONS BAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.quick-actions {
+    layout: horizontal;
+    height: 3;
+    background: #0A0A14;
+    border: round #2A2A50;
+    padding: 0 1;
+    margin: 0 0 1 0;
+}
+
+.quick-action-btn {
+    min-width: 12;
+    height: 3;
+    background: #0C0C18;
+    color: #00D4FF;
+    border: round #2A2A50;
+    margin: 0 1 0 0;
+}
+
+.quick-action-btn:hover {
+    background: #12122A;
+    color: #FFD700;
+    border: round #3A3A6A;
+}
+
+.quick-action-btn:focus {
+    border: round #FFD700;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HERO ART — Epic Animated Divine Display
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.hero-art {
+    border: none;
+    background: #0A0A12;
+    padding: 0;
+    margin: 0 0 1 0;
+    text-align: center;
+    min-height: 22;
+}
+
+.hero-art:hover {
+    background: #0C0C14;
+}
+
+.hero-art-animated {
+    border: none;
+    background: #0A0A12;
+    padding: 0;
+    margin: 0 0 1 0;
+    text-align: center;
+    min-height: 22;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GOD LEADERBOARD — Divine Rankings
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#god-leaderboard {
+    border: double #C9A227;
+    background: #0A0A14;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    min-height: 15;
+}
+
+#god-leaderboard:hover {
+    border: double #FFD700;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PANTHEON STRIP — Compact God Display
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#pantheon-strip {
+    height: auto;
+    min-height: 3;
+    border: round #2A2A50;
+    background: #0C0C18;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    text-align: center;
+}
+
+#pantheon-strip:hover {
+    border: round #3A3A6A;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ACTIVITY DASHBOARD — Heatmap and Sparklines
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#activity-dashboard {
+    border: round #2A2A50;
+    background: #0A0A14;
+    padding: 1 2;
+    margin: 0 0 1 0;
+}
+
+#activity-dashboard:hover {
+    border: round #3A3A6A;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DIVINE ACHIEVEMENTS — Badge Display
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#achievements {
+    border: round #3A3010;
+    background: #0A0A14;
+    padding: 1 2;
+    margin: 0 0 1 0;
+}
+
+#achievements:hover {
+    border: round #FFD700;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SPARKLINES & PROGRESS BARS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sparkline {
+    height: 1;
+    background: #0A0A14;
+}
+
+.progress-bar {
+    height: 1;
+    background: #1A1A3A;
+}
+
+.progress-bar-fill {
+    background: #FFD700;
+}
+
+.progress-bar-fill-green {
+    background: #00FF99;
+}
+
+.progress-bar-fill-red {
+    background: #FF4444;
+}
+
+.progress-bar-fill-cyan {
+    background: #00D4FF;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLLBAR STYLING — Divine Scrolls
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 Scrollbar {
     background: #0A0A12;
 }
@@ -288,4 +839,44 @@ ScrollBar > .scrollbar--bar {
 
 ScrollBar > .scrollbar--bar:hover {
     color: #FFD700;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SPECIAL EFFECTS — Divine Flourishes
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Pulse effect class (toggle with JS) */
+.pulse {
+    border: double #FFD700;
+}
+
+/* Glow effect */
+.glow {
+    border: heavy #FFEC8B;
+}
+
+/* Dim/inactive state */
+.dimmed {
+    opacity: 0.6;
+}
+
+/* Active/highlighted state */
+.highlighted {
+    border: double #FFD700;
+    background: #14142E;
+}
+
+/* Corner decorations (applied via Rich markup in code) */
+.corner-decorated {
+    padding: 1 2;
+}
+
+/* Greek key border effect (simulated) */
+.greek-border {
+    border: double #C9A227;
+}
+
+/* Laurel border effect */
+.laurel-border {
+    border: heavy #32CD32;
 }

@@ -17,6 +17,30 @@ colors:
   response_border: "#2A2A50"
   session_label: "#FFD700"
   session_border: "#555577"
+  # Extended palette for dashboard
+  divine_gold: "#FFD700"
+  divine_gold_dim: "#C9A227"
+  divine_gold_bright: "#FFEC8B"
+  olympus_purple: "#2A2A50"
+  olympus_purple_light: "#3A3A6A"
+  olympus_purple_dark: "#1A1A38"
+  celestial_cyan: "#00D4FF"
+  celestial_cyan_dim: "#00A8CC"
+  ethereal_green: "#00FF99"
+  infernal_red: "#FF4444"
+  void_black: "#0A0A12"
+  mist_white: "#E0F7FF"
+  # God-specific colors
+  hermes_gold: "#FFD700"
+  athena_silver: "#C0C0C0"
+  apollo_yellow: "#FFE066"
+  ares_crimson: "#DC143C"
+  zeus_white: "#F0F0FF"
+  hephaestus_orange: "#FF8C00"
+  artemis_green: "#32CD32"
+  poseidon_blue: "#1E90FF"
+  hades_purple: "#9B59B6"
+  dionysus_magenta: "#FF00FF"
 
 spinner:
   waiting_faces:
@@ -142,6 +166,89 @@ pantheon:
 
 pantheon_style: strip
 
+# Tool → God mapping for execution lanes
+tool_god_mapping:
+  terminal: Ares
+  bash: Ares
+  web_search: Artemis
+  web_extract: Artemis
+  file_read: Hephaestus
+  file_write: Hephaestus
+  file_search: Artemis
+  file_patch: Hephaestus
+  browser_navigate: Poseidon
+  browser_screenshot: Poseidon
+  execute_code: Hephaestus
+  delegate: Hermes
+  memory_store: Hades
+  memory_search: Hades
+  todo: Athena
+  think: Athena
+  mcp_call: Poseidon
+
+# Execution lanes with god assignments
+execution_lanes:
+  - name: STRATEGY
+    god: Athena
+    icon: "△"
+    tools: [todo, think, delegate]
+    color: "#C0C0C0"
+    desc: "planning · reasoning · decomposition"
+  - name: RETRIEVAL
+    god: Artemis
+    icon: "🏹"
+    tools: [web_search, web_extract, file_search]
+    color: "#32CD32"
+    desc: "hunting · searching · targeting"
+  - name: EXECUTION
+    god: Ares
+    icon: "⚔"
+    tools: [terminal, bash, execute_code]
+    color: "#DC143C"
+    desc: "commands · actions · force"
+  - name: FORGE
+    god: Hephaestus
+    icon: "🔨"
+    tools: [file_read, file_write, file_patch]
+    color: "#FF8C00"
+    desc: "building · coding · crafting"
+  - name: FLOW
+    god: Poseidon
+    icon: "🌊"
+    tools: [browser_navigate, browser_screenshot, mcp_call]
+    color: "#1E90FF"
+    desc: "infrastructure · systems · apis"
+  - name: ARCHIVE
+    god: Hades
+    icon: "🕯"
+    tools: [memory_store, memory_search]
+    color: "#9B59B6"
+    desc: "memory · recall · persistence"
+
+# Animation settings
+animations:
+  hero_cycle_ms: 5000
+  pulse_enabled: true
+  transition_ms: 200
+  sparkle_enabled: true
+
+# Notification styling
+notifications:
+  info_icon: "✦"
+  warn_icon: "⚠"
+  error_icon: "⚡"
+  success_icon: "✓"
+  divine_icon: "⚕"
+
+# Dashboard-specific styling
+dashboard:
+  bento_corner: "◈"
+  bento_glow: true
+  glass_effect: true
+  show_flow_diagram: true
+  show_god_faces: true
+  compact_pantheon: false
+
 banner_logo: |
   [dim #1A1A38]  ┌─────────────────────────────────────────────────────────────────────────────────────────┐[/]
   [dim #1A1A38]  │[/]                                                                                       [dim #1A1A38]│[/]
@@ -174,3 +281,52 @@ banner_hero: |
   [dim #1A1A38]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣴⠦⠈⠙⠿⣦⡄⠀⠀⠀⠀⠀[/]
   [dim #1A1A38]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣿⣤⡈⠁⢤⣿⠇⠀⠀⠀⠀⠀[/]
   [dim #555577]  ✦  divine messenger  ✦[/]
+
+# Animation frames for hero art (cycle through these)
+hero_frames:
+  - |
+    [dim #1A1A38]                    ╔══════════════════════════════════════════════════════════════╗[/]
+    [dim #1A1A38]                    ║[/]  [dim #2A2A50]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/]  [dim #1A1A38]║[/]
+    [dim #2A2A50]                    ║[/]  [dim #3A3A6A]░░[/][#555577]▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄[/][dim #3A3A6A]░░[/]  [dim #2A2A50]║[/]
+    [dim #3A3A6A]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/][#555577]▌[/]  [dim #3A3A6A]║[/]
+    [#555577]                    ║[/]  [#555577]▐[/][#3A3A6A]░░[/][#FFD700]⚡[/][#3A3A6A]░░░░░░░░░░░░░░░░░░░[/][bold #FFD700]◈ HERMES ◈[/][#3A3A6A]░░░░░░░░░░░░░░░░░░░[/][#FFD700]⚡[/][#3A3A6A]░░[/][#555577]▌[/]  [#555577]║[/]
+    [#C9A227]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/][#555577]▌[/]  [#C9A227]║[/]
+    [#FFD700]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░░░[/][#C9A227]▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄[/][#3A3A6A]░░░░░░[/][#555577]▌[/]  [#FFD700]║[/]
+    [#FFD700]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░[/][#C9A227]▐[/][#FFD700]██████████████████████████████████████████████[/][#C9A227]▌[/][#3A3A6A]░░░░[/][#555577]▌[/]  [#FFD700]║[/]
+    [#C9A227]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░[/][#C9A227]▐[/][#FFD700]██[/][bold #FFEC8B]  ⚕ DIVINE ORCHESTRATION SYSTEM ⚕  [/][#FFD700]██[/][#C9A227]▌[/][#3A3A6A]░░░░[/][#555577]▌[/]  [#C9A227]║[/]
+    [#C9A227]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░[/][#C9A227]▐[/][#FFD700]██████████████████████████████████████████████[/][#C9A227]▌[/][#3A3A6A]░░░░[/][#555577]▌[/]  [#C9A227]║[/]
+    [dim #555577]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░░░[/][#C9A227]▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀[/][#3A3A6A]░░░░░░[/][#555577]▌[/]  [dim #555577]║[/]
+    [dim #3A3A6A]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/][#555577]▌[/]  [dim #3A3A6A]║[/]
+    [dim #2A2A50]                    ║[/]  [#555577]▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀[/]  [dim #2A2A50]║[/]
+    [dim #1A1A38]                    ╚══════════════════════════════════════════════════════════════╝[/]
+  - |
+    [dim #1A1A38]                    ╔══════════════════════════════════════════════════════════════╗[/]
+    [dim #1A1A38]                    ║[/]  [dim #2A2A50]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/]  [dim #1A1A38]║[/]
+    [dim #2A2A50]                    ║[/]  [dim #3A3A6A]░░[/][#555577]▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄[/][dim #3A3A6A]░░[/]  [dim #2A2A50]║[/]
+    [dim #3A3A6A]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/][#555577]▌[/]  [dim #3A3A6A]║[/]
+    [#555577]                    ║[/]  [#555577]▐[/][#3A3A6A]░░[/][#FFEC8B]✦[/][#3A3A6A]░░░░░░░░░░░░░░░░░░░[/][bold #FFEC8B]◈ HERMES ◈[/][#3A3A6A]░░░░░░░░░░░░░░░░░░░[/][#FFEC8B]✦[/][#3A3A6A]░░[/][#555577]▌[/]  [#555577]║[/]
+    [#C9A227]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/][#555577]▌[/]  [#C9A227]║[/]
+    [#FFEC8B]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░░░[/][#FFD700]▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄[/][#3A3A6A]░░░░░░[/][#555577]▌[/]  [#FFEC8B]║[/]
+    [#FFEC8B]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░[/][#FFD700]▐[/][#FFEC8B]██████████████████████████████████████████████[/][#FFD700]▌[/][#3A3A6A]░░░░[/][#555577]▌[/]  [#FFEC8B]║[/]
+    [#FFD700]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░[/][#FFD700]▐[/][#FFEC8B]██[/][bold #FFD700]  ⚕ DIVINE ORCHESTRATION SYSTEM ⚕  [/][#FFEC8B]██[/][#FFD700]▌[/][#3A3A6A]░░░░[/][#555577]▌[/]  [#FFD700]║[/]
+    [#FFD700]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░[/][#FFD700]▐[/][#FFEC8B]██████████████████████████████████████████████[/][#FFD700]▌[/][#3A3A6A]░░░░[/][#555577]▌[/]  [#FFD700]║[/]
+    [dim #555577]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░░░[/][#FFD700]▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀[/][#3A3A6A]░░░░░░[/][#555577]▌[/]  [dim #555577]║[/]
+    [dim #3A3A6A]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/][#555577]▌[/]  [dim #3A3A6A]║[/]
+    [dim #2A2A50]                    ║[/]  [#555577]▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀[/]  [dim #2A2A50]║[/]
+    [dim #1A1A38]                    ╚══════════════════════════════════════════════════════════════╝[/]
+
+# Flow diagram template
+flow_diagram: |
+  [dim #2A2A50]┌─────────────────────────────────────────────────────────────────────────────────────┐[/]
+  [dim #2A2A50]│[/]  [bold #FFD700]⚡ DIVINE EXECUTION FLOW[/]                                                          [dim #2A2A50]│[/]
+  [dim #2A2A50]│[/]                                                                                     [dim #2A2A50]│[/]
+  [dim #2A2A50]│[/]   [#C0C0C0]△ ATHENA[/]  ──▶  [#32CD32]🏹 ARTEMIS[/]  ──▶  [#DC143C]⚔ ARES[/]  ──▶  [#FF8C00]🔨 HEPHAESTUS[/]           [dim #2A2A50]│[/]
+  [dim #2A2A50]│[/]   [dim #555577]strategy[/]      [dim #555577]retrieval[/]       [dim #555577]execution[/]     [dim #555577]forge[/]                     [dim #2A2A50]│[/]
+  [dim #2A2A50]│[/]       │              │               │              │                          [dim #2A2A50]│[/]
+  [dim #2A2A50]│[/]       └──────────────┴───────────────┴──────────────┘                          [dim #2A2A50]│[/]
+  [dim #2A2A50]│[/]                              │                                                  [dim #2A2A50]│[/]
+  [dim #2A2A50]│[/]                              ▼                                                  [dim #2A2A50]│[/]
+  [dim #2A2A50]│[/]                      [#FFD700]⚕ HERMES[/]  ◀──  [#9B59B6]🕯 HADES[/]  ◀──  [#1E90FF]🌊 POSEIDON[/]          [dim #2A2A50]│[/]
+  [dim #2A2A50]│[/]                      [dim #555577]orchestrator[/]    [dim #555577]archive[/]        [dim #555577]flow[/]                  [dim #2A2A50]│[/]
+  [dim #2A2A50]│[/]                                                                                     [dim #2A2A50]│[/]
+  [dim #2A2A50]└─────────────────────────────────────────────────────────────────────────────────────┘[/]

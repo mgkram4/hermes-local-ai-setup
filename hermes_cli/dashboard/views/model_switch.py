@@ -1,56 +1,102 @@
-"""View 7: Model Switchboard -- Type model name to switch."""
+"""View 7: Model Switchboard -- Epic Hermes art with divine model switching.
+
+Features:
+- Epic Hermes hero art (messenger god - model routing)
+- Active model panel with divine styling
+- LM Studio status panel
+- Configured providers list
+- Model switch input with context length
+"""
 
 from textual.app import ComposeResult
-from textual.containers import Horizontal, ScrollableContainer
+from textual.containers import Horizontal, Vertical, ScrollableContainer
 from textual.reactive import reactive
 from textual.widgets import Static, Input
 from textual import work
 
 
-CADUCEUS_ART = """\
-[#15152D]                                        \u2584\u2584\u2584\u2584\u2584                                        [/]
-[#1A1A38]                                      \u2588\u2588[/][#222248]\u2695[/][#1A1A38]\u2588\u2588                                      [/]
-[#1E1E40]                                       \u2580\u2588\u2588\u2580                                       [/]
-[#222248]                                        \u2588\u2588                                        [/]
-[#1E1E40]                            \u2584\u2584\u2584\u2584\u2584       \u2588\u2588       \u2584\u2584\u2584\u2584\u2584                            [/]
-[#222248]                        \u2584\u2588\u2588\u2580[/][#282850]     [/][#222248]\u2580\u2584   \u2588\u2588   \u2584\u2580[/][#282850]     [/][#222248]\u2580\u2588\u2588\u2584                        [/]
-[#282850]                       \u2588\u2580[/][#303060]         [/][#282850]\u2580\u2584 \u2588\u2588 \u2584\u2580[/][#303060]         [/][#282850]\u2580\u2588                       [/]
-[#303060]                        \u2580\u2588\u2584[/][#353568]       [/][#303060]\u2580\u2588\u2588\u2588\u2580[/][#353568]       [/][#303060]\u2584\u2588\u2580                        [/]
-[#282850]                          \u2580\u2588\u2588\u2584[/][#353568]     [/][#282850]\u2588\u2588[/][#353568]     [/][#282850]\u2584\u2588\u2588\u2580                          [/]
-[#222248]                        \u2584\u2588\u2580[/][#303060]       [/][#222248]\u2584\u2588\u2588\u2584[/][#303060]       [/][#222248]\u2580\u2588\u2584                        [/]
-[#1E1E40]                       \u2588\u2584[/][#282850]         [/][#1E1E40]\u2584\u2580\u2588\u2588\u2580\u2584[/][#282850]         [/][#1E1E40]\u2584\u2588                       [/]
-[#1A1A38]                        \u2580\u2588\u2588\u2584[/][#222248]     [/][#1A1A38]\u2584\u2580 \u2588\u2588 \u2580\u2584[/][#222248]     [/][#1A1A38]\u2584\u2588\u2588\u2580                        [/]
-[#15152D]                            \u2580\u2580\u2580\u2580\u2580  \u2580    \u2588\u2588    \u2580  \u2580\u2580\u2580\u2580\u2580                            [/]
-[#15152D]                                       \u2584\u2588\u2588\u2584                                       [/]
-[#15152D]                                     \u2580\u2580\u2580\u2580\u2580\u2580\u2580                                     [/]\
+# =============================================================================
+# EPIC MODEL SWITCH HERO ART — Hermes' Divine Caduceus
+# =============================================================================
+
+SWITCH_HERO_FRAME_1 = """\
+[dim #0A0A12]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/]
+[dim #1A1A38]░░[/][#2A2A50]╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]                                                                                                              [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]╔═══════════════════════════════════════╗[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣴⣾⣿⣿⣿⣿⣿⣿⣿⣷⣦⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [bold #FFEC8B]⚕ MODEL SWITCHBOARD ⚕[/]          [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]      [#555577]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [dim #00D4FF]Divine Model Routing[/]               [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]      [#C9A227]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]╠═══════════════════════════════════════╣[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]      [#FFD700]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⣿⣿⣿⣿[/][#FFEC8B]⚕[/][#FFD700]⣿⣿⣿⣿⣿⣿⣿⣿[/][#FFEC8B]⚕[/][#FFD700]⣿⣿⣿⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]                                       [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]      [#FFEC8B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [#FFD700]⚕[/] [dim #555577]HERMES[/] — Divine Messenger     [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]      [#FFEC8B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [dim #00D4FF]route · switch · connect[/]          [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]      [#C9A227]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]                                       [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]      [#555577]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [dim #555577]LM Studio • OpenRouter • Custom[/]   [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]╚═══════════════════════════════════════╝[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠿⠿⠿⠿⠿⠟⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]                                                              [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]                                                                                                              [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝[/][dim #1A1A38]░░[/]
+[dim #0A0A12]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/]\
 """
 
 
+# =============================================================================
+# WIDGETS
+# =============================================================================
+
+class SwitchHero(Static):
+    """Model switch hero art widget."""
+    
+    def render(self) -> str:
+        return SWITCH_HERO_FRAME_1
+
+
 class ActiveModelPanel(Static):
-    """Shows the current active model config."""
+    """Shows the current active model config with divine styling."""
+    
     info: reactive[dict] = reactive(dict, always_update=True)
 
     def render(self) -> str:
+        header = "[bold #FFD700]⚕ ACTIVE MODEL[/]\n\n"
+        
         if not self.info:
-            return "[dim #555577]Loading...[/]"
+            return header + "[dim #555577]Loading...[/]"
+        
         model = self.info.get("model", "?")
         provider = self.info.get("provider", "?")
         base_url = self.info.get("base_url", "")
         ctx = self.info.get("context_length")
+        
+        # Provider styling
+        if "openrouter" in provider.lower():
+            provider_icon = "🌐"
+            provider_color = "#00D4FF"
+        elif "lmstudio" in provider.lower() or "custom:" in provider.lower():
+            provider_icon = "🖥"
+            provider_color = "#00FF99"
+        elif "ollama" in provider.lower():
+            provider_icon = "🦙"
+            provider_color = "#FF8C00"
+        else:
+            provider_icon = "⚡"
+            provider_color = "#FFD700"
+        
         ctx_line = ""
         if ctx:
-            ctx_line = f"\n  [dim #555577]context: {ctx} tokens[/]"
+            ctx_line = f"\n  [dim #555577]Context: {ctx:,} tokens ({ctx // 1024}K)[/]"
+        
         return (
-            f"[bold #FFD700]\u2695 ACTIVE MODEL[/]\n\n"
-            f"  [bold #00FF99]\u25C6 {model}[/]\n"
-            f"  [dim #00A8CC]{provider}[/]\n"
-            f"  [dim #555577]{base_url}[/]"
-            f"{ctx_line}"
+            header
+            + f"  [{provider_color}]{provider_icon}[/] [bold #00FF99]{model}[/]\n"
+            + f"  [dim #00A8CC]{provider}[/]\n"
+            + f"  [dim #555577]{base_url}[/]"
+            + ctx_line
         )
 
 
 class LMStudioPanel(Static):
     """Shows LM Studio connection status and loaded models."""
+    
     content: reactive[str] = reactive("", always_update=True)
 
     def render(self) -> str:
@@ -59,6 +105,7 @@ class LMStudioPanel(Static):
 
 class ProvidersPanel(Static):
     """Shows all configured providers and their models."""
+    
     content: reactive[str] = reactive("", always_update=True)
 
     def render(self) -> str:
@@ -66,6 +113,8 @@ class ProvidersPanel(Static):
 
 
 class StatusMessage(Static):
+    """Status message display."""
+    
     message: reactive[str] = reactive("")
 
     def render(self) -> str:
@@ -73,21 +122,29 @@ class StatusMessage(Static):
 
 
 class ModelSwitchView(ScrollableContainer):
-    """Model Switchboard -- type model name to switch."""
+    """Model Switchboard -- Divine model routing with Hermes hero art.
+    
+    Features:
+    - Epic Hermes hero art
+    - Active model panel
+    - LM Studio status
+    - Configured providers list
+    - Model switch input
+    """
 
     def compose(self) -> ComposeResult:
-        yield Static(CADUCEUS_ART, classes="bento-hero")
+        yield SwitchHero(id="switch-hero", classes="hero-art")
         with Horizontal(classes="bento-row"):
-            yield ActiveModelPanel(id="active-model", classes="bento")
-            yield LMStudioPanel(id="lms-panel", classes="bento")
-        yield ProvidersPanel(id="providers-panel", classes="bento")
+            yield ActiveModelPanel(id="active-model", classes="divine-panel-gold")
+            yield LMStudioPanel(id="lms-panel", classes="divine-panel-gold")
+        yield ProvidersPanel(id="providers-panel", classes="divine-panel")
         yield Static(
-            "[bold #FFD700]\u2695 SWITCH MODEL[/]  "
-            "[dim #00A8CC]Model name as in LM Studio / config; context = max tokens "
-            "(optional: leave blank to keep existing or default 32K)[/]",
+            "[bold #FFD700]⚕ SWITCH MODEL[/]  "
+            "[dim #00A8CC]Enter model name as shown in LM Studio / config. "
+            "Context = max tokens (optional: leave blank for default 32K)[/]",
             classes="bento-gold",
         )
-        with Horizontal(id="switch-row"):
+        with Horizontal(id="switch-row", classes="divine-panel"):
             yield Input(
                 placeholder="Model id (e.g. gemma-4-e4b-it)",
                 id="switch-input-model",
@@ -101,36 +158,44 @@ class ModelSwitchView(ScrollableContainer):
     def on_input_submitted(self, event: Input.Submitted) -> None:
         if event.input.id not in ("switch-input-model", "switch-input-context"):
             return
+        
         model_inp = self.query_one("#switch-input-model", Input)
         ctx_inp = self.query_one("#switch-input-context", Input)
         model_id = model_inp.value.strip()
+        
         if not model_id:
-            self._set_status("[bold #FF4444]\u2717 Enter a model name[/]")
+            self._set_status("[bold #FF4444]✗ Enter a model name[/]")
             return
+        
         from hermes_cli.dashboard.data import (
             get_custom_providers,
             resolve_dashboard_context_input,
         )
+        
         providers = get_custom_providers()
         lms_providers = [
             p for p in providers
             if "localhost:1234" in p.get("base_url", "") or "lmstudio" in p.get("name", "").lower()
         ]
+        
         if lms_providers:
             target = lms_providers[0]["name"]
         elif providers:
             target = providers[0]["name"]
         else:
             self._set_status(
-                "[bold #FF4444]\u2717 No custom providers configured in config.yaml[/]",
+                "[bold #FF4444]✗ No custom providers configured in config.yaml[/]",
             )
             return
+        
         tokens, err = resolve_dashboard_context_input(
             ctx_inp.value, target, model_id,
         )
+        
         if err:
-            self._set_status(f"[bold #FF4444]\u2717 {err}[/]")
+            self._set_status(f"[bold #FF4444]✗ {err}[/]")
             return
+        
         self._do_switch(model_id, tokens, target)
 
     @work(thread=True)
@@ -141,14 +206,16 @@ class ModelSwitchView(ScrollableContainer):
 
         ensure_provider_has_model(target, model_id, context_length)
         ok = switch_active_model(model_id, target)
+        
         if ok:
             msg = (
-                f"[bold #00FF99]\u2713 Switched to {model_id}[/]  "
-                f"[dim #00A8CC]({context_length} ctx) via {target} "
-                f"\u2014 restart hermes to use[/]"
+                f"[bold #00FF99]✓ Switched to {model_id}[/]  "
+                f"[dim #00A8CC]({context_length:,} ctx) via {target} "
+                f"— restart hermes to use[/]"
             )
         else:
-            msg = f"[bold #FF4444]\u2717 Failed to switch to {model_id}[/]"
+            msg = f"[bold #FF4444]✗ Failed to switch to {model_id}[/]"
+        
         self.app.call_from_thread(self._set_status, msg)
         self.app.call_from_thread(self.load_data)
 
@@ -160,9 +227,11 @@ class ModelSwitchView(ScrollableContainer):
         from hermes_cli.dashboard.data import (
             get_active_model_info, get_custom_providers, get_lmstudio_models,
         )
+        
         active = get_active_model_info()
         providers = get_custom_providers()
 
+        # Find LM Studio URLs
         lms_urls = set()
         for p in providers:
             url = p.get("base_url", "")
@@ -171,6 +240,7 @@ class ModelSwitchView(ScrollableContainer):
         if not lms_urls:
             lms_urls.add("http://localhost:1234/v1")
 
+        # Check LM Studio connection
         lms_models = []
         lms_online = False
         lms_url = ""
@@ -183,36 +253,44 @@ class ModelSwitchView(ScrollableContainer):
                 break
             lms_url = url
 
+        # Build LM Studio panel content
         if lms_online:
-            lines = [f"[bold #00FF99]\u25CF LM STUDIO ONLINE[/]  [dim #00A8CC]{lms_url}[/]\n"]
+            lines = [f"[bold #00FF99]● LM STUDIO ONLINE[/]  [dim #00A8CC]{lms_url}[/]\n"]
             for m in lms_models:
                 mid = m.get("id", "?")
-                lines.append(f"  [bold #E0F7FF]\u2692 {mid}[/]")
+                lines.append(f"  [bold #E0F7FF]⚕ {mid}[/]")
             lms_text = "\n".join(lines)
         else:
             lms_text = (
-                f"[bold #FF4444]\u25CF LM STUDIO OFFLINE[/]  [dim #00A8CC]{lms_url}[/]\n\n"
+                f"[bold #FF4444]○ LM STUDIO OFFLINE[/]  [dim #00A8CC]{lms_url}[/]\n\n"
                 f"[dim #555577]Start LM Studio to see loaded models[/]"
             )
 
+        # Build providers panel content
         active_model = active.get("model", "")
         active_pname = active.get("provider_name", "")
-        prov_lines = ["[bold #FFD700]\u0393\u039D\u03A9\u03A3\u03A4\u039F\u0399 \u2014 CONFIGURED PROVIDERS[/]\n"]
+        
+        prov_lines = ["[bold #FFD700]ΓΝΩΣΤΟΙ — CONFIGURED PROVIDERS[/]\n"]
+        
         for p in providers:
             pname = p.get("name", "?")
             purl = p.get("base_url", "")
             models = p.get("models", [])
             is_active_prov = pname == active_pname
-            badge = "[bold #00FF99]\u25C6 ACTIVE[/]" if is_active_prov else "[dim #555577]\u25C7[/]"
+            
+            badge = "[bold #00FF99]◆ ACTIVE[/]" if is_active_prov else "[dim #555577]◇[/]"
             prov_lines.append(f"  {badge}  [bold #FFD700]{pname}[/]  [dim #00A8CC]{purl}[/]")
+            
             for m in models:
                 mid = m.get("id", "?")
                 ctx = m.get("context_length", 0)
                 ctx_str = f"  {ctx // 1024}K" if ctx else ""
                 is_current = is_active_prov and mid == active_model
-                marker = "[bold #00FF99]\u2192[/]" if is_current else "[dim #2A2A50]\u2502[/]"
+                marker = "[bold #00FF99]→[/]" if is_current else "[dim #2A2A50]│[/]"
                 prov_lines.append(f"      {marker}  [#E0F7FF]{mid}[/][dim #555577]{ctx_str}[/]")
+            
             prov_lines.append("")
+        
         prov_text = "\n".join(prov_lines)
 
         self.app.call_from_thread(self._apply, active, lms_text, prov_text)
@@ -221,6 +299,7 @@ class ModelSwitchView(ScrollableContainer):
         self.query_one("#active-model", ActiveModelPanel).info = active
         self.query_one("#lms-panel", LMStudioPanel).content = lms_text
         self.query_one("#providers-panel", ProvidersPanel).content = prov_text
+        
         model_inp = self.query_one("#switch-input-model", Input)
         ctx_inp = self.query_one("#switch-input-context", Input)
         model_inp.value = active.get("model") or ""

@@ -124,6 +124,14 @@ class SkinConfig:
     banner_hero: str = ""    # Rich-markup hero art (replaces HERMES_CADUCEUS)
     pantheon: List[Dict[str, str]] = field(default_factory=list)  # [{name, role}] for Pantheon Registry
     pantheon_style: str = ""  # "strip" for compact horizontal, "" for default grid
+    # New fields for OLYMPUS ASCENDED dashboard
+    tool_god_mapping: Dict[str, str] = field(default_factory=dict)  # tool_name -> god_name
+    execution_lanes: List[Dict[str, Any]] = field(default_factory=list)  # lane definitions
+    animations: Dict[str, Any] = field(default_factory=dict)  # animation settings
+    notifications: Dict[str, str] = field(default_factory=dict)  # notification icons
+    dashboard: Dict[str, Any] = field(default_factory=dict)  # dashboard-specific settings
+    hero_frames: List[str] = field(default_factory=list)  # animation frames for hero art
+    flow_diagram: str = ""  # flow diagram template
 
     def get_color(self, key: str, fallback: str = "") -> str:
         """Get a color value with fallback."""
@@ -145,6 +153,36 @@ class SkinConfig:
     def get_branding(self, key: str, fallback: str = "") -> str:
         """Get a branding value with fallback."""
         return self.branding.get(key, fallback)
+
+    def get_god_for_tool(self, tool_name: str) -> Optional[str]:
+        """Get the god assigned to a tool, or None if not mapped."""
+        return self.tool_god_mapping.get(tool_name)
+
+    def get_god_by_name(self, god_name: str) -> Optional[Dict[str, str]]:
+        """Get pantheon god data by name."""
+        for god in self.pantheon:
+            if god.get("name") == god_name:
+                return god
+        return None
+
+    def get_lane_by_god(self, god_name: str) -> Optional[Dict[str, Any]]:
+        """Get execution lane by god name."""
+        for lane in self.execution_lanes:
+            if lane.get("god") == god_name:
+                return lane
+        return None
+
+    def get_animation_setting(self, key: str, fallback: Any = None) -> Any:
+        """Get an animation setting with fallback."""
+        return self.animations.get(key, fallback)
+
+    def get_dashboard_setting(self, key: str, fallback: Any = None) -> Any:
+        """Get a dashboard setting with fallback."""
+        return self.dashboard.get(key, fallback)
+
+    def get_notification_icon(self, level: str, fallback: str = "•") -> str:
+        """Get notification icon for a level (info, warn, error, success)."""
+        return self.notifications.get(f"{level}_icon", fallback)
 
 
 # =============================================================================
@@ -556,6 +594,14 @@ def _build_skin_config(data: Dict[str, Any]) -> SkinConfig:
         banner_hero=data.get("banner_hero", ""),
         pantheon=data.get("pantheon", []),
         pantheon_style=data.get("pantheon_style", ""),
+        # New OLYMPUS ASCENDED fields
+        tool_god_mapping=data.get("tool_god_mapping", {}),
+        execution_lanes=data.get("execution_lanes", []),
+        animations=data.get("animations", {}),
+        notifications=data.get("notifications", {}),
+        dashboard=data.get("dashboard", {}),
+        hero_frames=data.get("hero_frames", []),
+        flow_diagram=data.get("flow_diagram", ""),
     )
 
 

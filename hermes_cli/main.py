@@ -2494,6 +2494,13 @@ def cmd_dashboard(args):
     run_dashboard()
 
 
+def cmd_zeus(args):
+    """Launch the Zeus Monitor to watch active Hermes session."""
+    _require_tty("zeus")
+    from hermes_cli.zeus_monitor import run_monitor
+    run_monitor()
+
+
 def cmd_version(args):
     """Show version."""
     print(f"Hermes Agent v{__version__} ({__release_date__})")
@@ -5489,6 +5496,16 @@ For more help on a command:
         help="Launch the Olympus interactive dashboard (TUI)",
     )
     dashboard_parser.set_defaults(func=cmd_dashboard)
+
+    # =========================================================================
+    # zeus command — monitor active Hermes session
+    # =========================================================================
+    zeus_parser = subparsers.add_parser(
+        "zeus",
+        help="Monitor active Hermes session (run in separate terminal)",
+        description="Zeus Monitor — Watch Hermes activity in real-time"
+    )
+    zeus_parser.set_defaults(func=cmd_zeus)
 
     # =========================================================================
     # version command

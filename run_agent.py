@@ -101,6 +101,7 @@ from agent.trajectory import (
     convert_scratchpad_to_think, has_incomplete_scratchpad,
     save_trajectory as _save_trajectory_to_file,
 )
+from agent.session_notes import SessionNotesTracker
 from utils import atomic_json_write, env_var_enabled
 
 
@@ -1012,6 +1013,11 @@ class AIAgent:
         # Track conversation messages for session logging
         self._session_messages: List[Dict[str, Any]] = []
         
+        # Session notes tracker — human-readable .txt file with important observations
+        # Initialized later after config is loaded (to respect display.session_notes setting)
+        self._session_notes = None
+        self._session_notes_enabled = True  # Default, may be overridden by config
+        
         # Cached system prompt -- built once per session, only rebuilt on compression
         self._cached_system_prompt: Optional[str] = None
         
@@ -1059,6 +1065,12 @@ class AIAgent:
             _agent_cfg = _load_agent_config()
         except Exception:
             _agent_cfg = {}
+
+        # Initialize session notes tracker (respects display.session_notes config)
+        display_cfg = _agent_cfg.get("display", {})
+        self._session_notes_enabled = display_cfg.get("session_notes", True)
+        if self._session_notes_enabled:
+            self._session_notes = SessionNotesTracker(self.session_id, self.logs_dir, model)
 
         # Persistent memory (MEMORY.md + USER.md) -- loaded from disk
         self._memory_store = None
@@ -5840,6 +5852,13 @@ class AIAgent:
         new_system_prompt = self._build_system_prompt(system_message)
         self._cached_system_prompt = new_system_prompt
 
+        # Log compression event to session notes
+        if self._session_notes:
+            try:
+                self._session_notes.log_event("compression", f"Context compressed, starting new session segment")
+            except Exception:
+                pass
+        
         if self._session_db:
             try:
                 # Propagate title to the new session with auto-numbering
@@ -5849,6 +5868,9 @@ class AIAgent:
                 self.session_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
                 # Update session_log_file to point to the new session's JSON file
                 self.session_log_file = self.logs_dir / f"session_{self.session_id}.json"
+                # Update session notes tracker for new session
+                if self._session_notes_enabled:
+                    self._session_notes = SessionNotesTracker(self.session_id, self.logs_dir, self.model)
                 self._session_db.create_session(
                     session_id=self.session_id,
                     source=self.platform or os.environ.get("HERMES_SESSION_SOURCE", "cli"),
@@ -8887,6 +8909,29 @@ class AIAgent:
         
         # Clear interrupt state after handling
         self.clear_interrupt()
+        
+        # Log session notes — extract tool calls from conversation for tracking
+        if self._session_notes:
+            try:
+                turn_tool_calls = []
+                turn_tool_results = []
+                for msg in messages:
+                    if msg.get("role") == "assistant" and msg.get("tool_calls"):
+                        for tc in msg["tool_calls"]:
+                            if isinstance(tc, dict):
+                                turn_tool_calls.append(tc)
+                    elif msg.get("role") == "tool":
+                        turn_tool_results.append(msg.get("content", ""))
+                
+                self._session_notes.log_turn(
+                    user_message=original_user_message,
+                    assistant_response=final_response or "",
+                    tool_calls=turn_tool_calls,
+                    tool_results=turn_tool_results,
+                    tokens_used=self.session_total_tokens,
+                )
+            except Exception as e:
+                logger.debug("Session notes logging failed: %s", e)
 
         # Clear stream callback so it doesn't leak into future calls
         self._stream_callback = None
@@ -8927,6 +8972,63 @@ class AIAgent:
         # provider before the second message. Actual session-end cleanup is
         # handled by the CLI (atexit / /reset) and gateway (session expiry /
         # _reset_session).
+
+        # Zeus Overseer — lightweight supervisor for task completion monitoring
+        # Runs after each turn to evaluate if the task is complete
+        overseer_nudge = None
+        try:
+            overseer_cfg = _agent_cfg.get("overseer", {})
+            if overseer_cfg.get("enabled", False) and final_response and not interrupted:
+                trigger = overseer_cfg.get("trigger", "on_completion")
+                should_evaluate = False
+                
+                # Determine if we should run the overseer
+                if trigger == "every_turn":
+                    should_evaluate = True
+                elif trigger == "on_completion":
+                    # Check if agent seems to think it's done (no tool calls in last response)
+                    last_msg = messages[-1] if messages else {}
+                    should_evaluate = last_msg.get("role") == "assistant" and not last_msg.get("tool_calls")
+                elif trigger == "on_idle":
+                    # Agent stopped making tool calls
+                    should_evaluate = completed
+                
+                if should_evaluate:
+                    from agent.zeus_overseer import get_overseer
+                    overseer = get_overseer()
+                    
+                    # Get session notes content for evaluation
+                    notes_content = ""
+                    if self._session_notes and self._session_notes.notes_file.exists():
+                        try:
+                            notes_content = self._session_notes.notes_file.read_text(encoding="utf-8")[-2000:]
+                        except Exception:
+                            pass
+                    
+                    overseer_result = overseer.evaluate(
+                        task=original_user_message,
+                        session_notes=notes_content,
+                        last_response=final_response,
+                    )
+                    
+                    # Log overseer evaluation to session notes
+                    if self._session_notes:
+                        status = "✓ COMPLETE" if overseer_result.complete else "⚡ IN PROGRESS"
+                        self._session_notes.log_event(
+                            "zeus_overseer",
+                            f"{status} (confidence: {overseer_result.confidence:.0%}) — {overseer_result.reasoning}"
+                        )
+                    
+                    # Prepare nudge for injection if configured
+                    if overseer_cfg.get("inject_nudges", True) and not overseer_result.complete:
+                        overseer_nudge = overseer.format_nudge_for_injection(overseer_result)
+                        if overseer_nudge:
+                            result["overseer_nudge"] = overseer_nudge
+                    
+                    result["overseer_complete"] = overseer_result.complete
+                    result["overseer_confidence"] = overseer_result.confidence
+        except Exception as e:
+            logger.debug("Zeus Overseer evaluation failed: %s", e)
 
         # Plugin hook: on_session_end
         # Fired at the very end of every run_conversation call.

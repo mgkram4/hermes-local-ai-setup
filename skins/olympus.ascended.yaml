@@ -802,27 +802,9 @@ dashboard:
   show_god_faces: true
   compact_pantheon: false
 
-banner_logo: |
-  [dim #1A1A38]┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐[/]
-  [dim #1A1A38]│[/]                                                                                                                                       [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]┌──────────────────────┐[/]   [dim #2A2A50]┌────────────────────────────────────────────────────────────────────────────────────────────┐[/]   [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]│[/]  [#3A3A6A]⠀⠀⠀⢀⣤⣤⣤⣤⡀⠀⠀⠀[/]  [dim #2A2A50]│[/]   [dim #2A2A50]│[/]   [bold #FFD700]██╗  ██╗███████╗██████╗ ███╗   ███╗███████╗███████╗[/]                           [dim #2A2A50]│[/]   [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]│[/]  [#C9A227]⠀⢀⣾⣿[/][#FFD700]⚡[/][#C9A227]⣿⣿[/][#FFD700]⚡[/][#C9A227]⣷⡀⠀⠀[/]  [dim #2A2A50]│[/]   [dim #2A2A50]│[/]   [bold #FFD700]██║  ██║██╔════╝██╔══██╗████╗ ████║██╔════╝██╔════╝[/]                           [dim #2A2A50]│[/]   [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]│[/]  [#FFD700]⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀[/]  [dim #2A2A50]│[/]   [dim #2A2A50]│[/]   [#FFD700]███████║█████╗  ██████╔╝██╔████╔██║█████╗  ███████╗[/]                           [dim #2A2A50]│[/]   [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]│[/]  [#FFEC8B]⠀⠀⢿⣿[/][bold #FFD700]◉[/][#FFEC8B]⣿⣿⣿[/][bold #FFD700]◉[/][#FFEC8B]⣿⡿⠀⠀[/]  [dim #2A2A50]│[/]   [dim #2A2A50]│[/]   [#C9A227]██╔══██║██╔══╝  ██╔══██╗██║╚██╔╝██║██╔══╝  ╚════██║[/]                           [dim #2A2A50]│[/]   [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]│[/]  [#FFD700]⠀⠀⠀⠙⣿⣿⣿⣿⣿⠋⠀⠀⠀[/]  [dim #2A2A50]│[/]   [dim #2A2A50]│[/]   [dim #C9A227]██║  ██║███████╗██║  ██║██║ ╚═╝ ██║███████╗███████║[/]                           [dim #2A2A50]│[/]   [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]│[/]  [#C9A227]⠀⠀⠀⠀⠀⣿[/][#FFD700]⣿⣿[/][#C9A227]⣿⠀⠀⠀⠀⠀[/]  [dim #2A2A50]│[/]   [dim #2A2A50]│[/]   [dim #8B7500]╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚══════╝[/]                           [dim #2A2A50]│[/]   [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]│[/]  [#8B7500]⠀⠀⢀⣴⣿⣿[/][bold #FFD700]⚕[/][#8B7500]⣿⣿⣦⡀⠀⠀[/]  [dim #2A2A50]│[/]   [dim #2A2A50]└────────────────────────────────────────────────────────────────────────────────────────────┘[/]   [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]│[/]  [#555577]⠀⣰⣿⣿⡿⠛⠛⠛⢿⣿⣿⣆⠀[/]  [dim #2A2A50]│[/]   [dim #2A2A50]┌────────────────────────────────────────────────────────────────────────────────────────────┐[/]   [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]│[/]  [#3A3A6A]⢠⣿⣿⠃⠀⠀⠀⠀⠀⠘⣿⣿⡄[/]  [dim #2A2A50]│[/]   [dim #2A2A50]│[/]   [dim #555577]⚡  O L Y M P U S  ·  D I V I N E   O R C H E S T R A T I O N  ⚡[/]                   [dim #2A2A50]│[/]   [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]│[/]  [dim #555577]⣿⣿⡇⠀[/][#C9A227]⣿⣿⣿⣿[/][dim #555577]⠀⢸⣿⣿[/]  [dim #2A2A50]│[/]   [dim #2A2A50]│[/]   [dim #3A3A6A]route  ·  spawn  ·  preserve  ·  synthesize  ·  transcend[/]                       [dim #2A2A50]│[/]   [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]│[/]  [dim #3A3A6A]⠹⣿⣷⣄⠀⠀⠀⠀⣠⣾⣿⠏[/]  [dim #2A2A50]│[/]   [dim #2A2A50]└────────────────────────────────────────────────────────────────────────────────────────────┘[/]   [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]│[/]  [dim #1A1A38]⠀⠈⠻⣿⣿⣶⣶⣿⣿⠟⠁⠀[/]  [dim #2A2A50]│[/]   [dim #2A2A50]┌────────────────────────────────────────────────────────────────────────────────────────────┐[/]   [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]│[/]   [bold #FFD700]⚕ HERMES ⚕[/]     [dim #2A2A50]│[/]   [dim #2A2A50]│[/]   [#FFD700]⚕[/][dim #555577]HERM[/] [#C0C0C0]△[/][dim #555577]ATHE[/] [#FFD700]☀[/][dim #555577]APOL[/] [#8B0000]⚔[/][dim #555577]ARES[/] [#87CEEB]👁[/][dim #555577]ZEUS[/] [#B87333]🔨[/][dim #555577]HEPH[/] [#228B22]🏹[/][dim #555577]ARTE[/] [#4169E1]🔱[/][dim #555577]POSE[/] [#2F4F4F]💀[/][dim #555577]HADE[/] [#8B008B]🍷[/][dim #555577]DION[/]   [dim #2A2A50]│[/]   [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]│[/]  [dim #555577]Divine Messenger[/]  [dim #2A2A50]│[/]   [dim #2A2A50]└────────────────────────────────────────────────────────────────────────────────────────────┘[/]   [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]   [dim #2A2A50]└──────────────────────┘[/]                                                                                                     [dim #1A1A38]│[/]
-  [dim #1A1A38]│[/]                                                                                                                                       [dim #1A1A38]│[/]
-  [dim #1A1A38]└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘[/]
+# Leave banner_logo empty to use the Rich Table-based bento layout
+# which automatically handles alignment using the banner_hero art + HERMES logo
+banner_logo: ""
 
 banner_hero: |
   [dim #555577]  ✦  ⚕  ✦  [/]
@@ -874,6 +856,57 @@ hero_frames:
     [dim #3A3A6A]                    ║[/]  [#555577]▐[/][#3A3A6A]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/][#555577]▌[/]  [dim #3A3A6A]║[/]
     [dim #2A2A50]                    ║[/]  [#555577]▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀[/]  [dim #2A2A50]║[/]
     [dim #1A1A38]                    ╚══════════════════════════════════════════════════════════════╝[/]
+
+# Fleet Observer configuration — live subagent monitoring
+fleet_observer:
+  title: "◈ DIVINE FLEET OBSERVER — Live Subagent Activity"
+  empty_message: "⚡ No active subagents. Hermes awaits your command."
+  status_icons:
+    idle: "○"
+    spawning: "◐"
+    thinking: "◑"
+    querying: "◒"
+    processing: "◓"
+    responding: "◔"
+    complete: "●"
+    failed: "✗"
+  status_colors:
+    active: "#00FF99"
+    complete: "#00D4FF"
+    failed: "#FF4444"
+    idle: "#555577"
+  progress_bar:
+    filled: "█"
+    empty: "░"
+    width: 20
+  show_thinking: true
+  show_tool_history: true
+  max_tool_history: 3
+
+# Session Notes Viewer configuration — divine chronicle
+session_notes:
+  title: "◈ DIVINE CHRONICLE — Session Notes"
+  empty_message: "📜 No active session. Start a conversation to see notes."
+  colors:
+    header: "#FFD700"
+    turn_number: "#FFD700"
+    timestamp: "#555577"
+    user_message: "#E0F7FF"
+    tools: "#00D4FF"
+    files: "#00FF99"
+    errors: "#FF4444"
+    observations: "#9B59B6"
+    response: "#555577"
+    stats: "#555577"
+  icons:
+    user: "💬"
+    tools: "⚡"
+    files: "📝"
+    error: "⚠"
+    observation: "•"
+    response: "→"
+  max_turns_displayed: 5
+  show_response_preview: true
 
 # Flow diagram template
 flow_diagram: |

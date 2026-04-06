@@ -460,10 +460,13 @@ try:
 except Exception:
     pass  # Skin engine is optional — default skin used if unavailable
 
-# Initialize fleet monitor (Telegram mirror + agent state tracking)
+# Initialize fleet monitor (Telegram mirror + agent state tracking + CLI observability)
 try:
     from agent.fleet_monitor import init_fleet_monitor
-    init_fleet_monitor(CLI_CONFIG)
+    _fm = init_fleet_monitor(CLI_CONFIG)
+    # Set observability level from config
+    _obs_level = CLI_CONFIG.get("display", {}).get("subagent_observability", "summary")
+    _fm.set_observability(_obs_level)
 except Exception:
     pass  # Fleet monitor is optional
 
@@ -6764,6 +6767,29 @@ class HermesCLI:
                         padding=(1, 2),
                     ))
 
+
+            # Zeus Overseer nudge — if overseer says task isn't complete, show nudge
+            if result and result.get("overseer_nudge"):
+                overseer_nudge = result["overseer_nudge"]
+                overseer_complete = result.get("overseer_complete", False)
+                overseer_confidence = result.get("overseer_confidence", 0.0)
+                
+                if not overseer_complete:
+                    # Show the nudge in a distinct style
+                    _cprint(f"\n{_DIM}┌─ Zeus Overseer ({'%.0f%%' % (overseer_confidence * 100)} confident) ─┐{_RST}")
+                    _cprint(f"{_DIM}│{_RST} {overseer_nudge}")
+                    _cprint(f"{_DIM}└{'─' * 40}┘{_RST}")
+                    
+                    # Auto-continue if configured (inject nudge as next message)
+                    try:
+                        from hermes_cli.config import load_config as _load_cli_cfg
+                        _cli_cfg = _load_cli_cfg()
+                        if _cli_cfg.get("overseer", {}).get("auto_continue", False):
+                            # Queue the nudge as the next user message
+                            if hasattr(self, '_pending_input'):
+                                self._pending_input.put(f"[Zeus says: {overseer_nudge}] Please continue.")
+                    except Exception:
+                        pass
 
             # Play terminal bell when agent finishes (if enabled).
             # Works over SSH — the bell propagates to the user's terminal.

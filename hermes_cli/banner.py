@@ -295,14 +295,23 @@ def build_welcome_banner(console: Console, model: str, cwd: str,
     label_color = _skin_color("ui_label", "#5F87D4")
 
     # Use skin's custom caduceus art if provided
+    # Check if we'll show a bento banner (which already has the hero art)
     try:
         from hermes_cli.skin_engine import get_active_skin
         _bskin = get_active_skin()
         _hero = _bskin.banner_hero if hasattr(_bskin, 'banner_hero') and _bskin.banner_hero else HERMES_CADUCEUS
+        # If banner_logo is empty/None, we'll show bento banner with hero art, so skip it here
+        _show_bento = not (_bskin.banner_logo if hasattr(_bskin, 'banner_logo') and _bskin.banner_logo else None)
     except Exception:
         _bskin = None
         _hero = HERMES_CADUCEUS
-    left_lines = ["", _hero, ""]
+        _show_bento = False
+    
+    # Only include hero art in main panel if we're NOT showing the bento banner
+    if _show_bento:
+        left_lines = [""]  # Skip hero art - it's in the bento banner above
+    else:
+        left_lines = ["", _hero, ""]
     model_short = model.split("/")[-1] if "/" in model else model
     if model_short.endswith(".gguf"):
         model_short = model_short[:-5]
@@ -459,7 +468,7 @@ def build_welcome_banner(console: Console, model: str, cwd: str,
                 else:
                     col = dim
                 strip_parts.append(f"[{col}]{icon}[/][dim {dim}]{name}[/]")
-            right_lines.append(f" [{dim}]│[/] " + f" [{dim}]·[/] ".join(strip_parts))
+            right_lines.append(" " + " · ".join(strip_parts))
         else:
             def _god_cell(g):
                 """Return (hat+name row, face+status row) each exactly 11 visible chars."""
@@ -522,7 +531,7 @@ def build_welcome_banner(console: Console, model: str, cwd: str,
             name = lane.get("name", "?")[:4]
             color = lane.get("color", dim)
             lane_parts.append(f"[{color}]{icon}[/][dim {dim}]{name}[/]")
-        right_lines.append(f" [{dim}]│[/] " + f" [{dim}]→[/] ".join(lane_parts))
+        right_lines.append(" " + " → ".join(lane_parts))
 
     # Divine Quote — random quote from a random god
     try:
@@ -591,7 +600,36 @@ def build_welcome_banner(console: Console, model: str, cwd: str,
     console.print()
     term_width = shutil.get_terminal_size().columns
     if term_width >= 80:
-        _logo = _bskin.banner_logo if _bskin and hasattr(_bskin, 'banner_logo') and _bskin.banner_logo else HERMES_AGENT_LOGO
-        console.print(_logo)
+        # Check if skin has a custom banner_logo
+        _custom_logo = _bskin.banner_logo if _bskin and hasattr(_bskin, 'banner_logo') and _bskin.banner_logo else None
+        
+        if _custom_logo:
+            # Use Rich Panel for custom logo to ensure proper rendering
+            from rich.panel import Panel as LogoPanel
+            logo_panel = LogoPanel(
+                _custom_logo.strip(),
+                border_style="dim #2A2A50",
+                padding=(0, 1),
+            )
+            console.print(logo_panel)
+        else:
+            # Default: Build a bento-style banner with god art + logo side by side
+            from rich.table import Table as BentoTable
+            from rich.panel import Panel as BentoPanel
+            
+            # Get the hero art (caduceus) from skin or use default
+            _hero = _bskin.banner_hero if _bskin and hasattr(_bskin, 'banner_hero') and _bskin.banner_hero else HERMES_CADUCEUS
+            
+            bento = BentoTable(show_header=False, show_edge=False, box=None, padding=(0, 2))
+            bento.add_column("art", width=28, no_wrap=True)
+            bento.add_column("logo", no_wrap=True)
+            bento.add_row(_hero.strip(), HERMES_AGENT_LOGO)
+            
+            bento_panel = BentoPanel(
+                bento,
+                border_style="dim #2A2A50",
+                padding=(0, 1),
+            )
+            console.print(bento_panel)
         console.print()
     console.print(outer_panel)

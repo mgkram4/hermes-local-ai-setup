@@ -1,12 +1,13 @@
 """View 1: The Assembly -- OLYMPUS ASCENDED Home View.
 
 Divine command center with:
-- Epic animated 8-bit Hermes hero art with caduceus
-- God Stats Leaderboard with rankings
-- Interactive pantheon god cards with full details
+- Cinematic animated hero banner with Hermes pixel art
+- Divine execution flow diagram showing god routing
+- Interactive pantheon strip with status indicators
 - Live execution lanes with real tool call data
+- God Stats Leaderboard with rankings
 - Divine notifications panel
-- Cost tracker widget
+- Cost tracker (Drachmai treasury)
 - Activity heatmap and sparklines
 - Divine achievements system
 - God Gallery with epic braille pixel art portraits
@@ -22,14 +23,44 @@ import random
 
 
 # =============================================================================
+# OLYMPUS COLOR PALETTE — Divine Design System
+# =============================================================================
+
+COLORS = {
+    "divine_gold": "#FFD700",
+    "divine_gold_dim": "#C9A227",
+    "divine_gold_bright": "#FFEC8B",
+    "olympus_purple": "#2A2A50",
+    "olympus_purple_light": "#3A3A6A",
+    "olympus_purple_dark": "#1A1A38",
+    "celestial_cyan": "#00D4FF",
+    "celestial_cyan_dim": "#00A8CC",
+    "ethereal_green": "#00FF99",
+    "infernal_red": "#FF4444",
+    "void_black": "#0A0A12",
+    "mist_white": "#E0F7FF",
+    "hermes_gold": "#FFD700",
+    "athena_silver": "#C0C0C0",
+    "apollo_yellow": "#FFE066",
+    "ares_crimson": "#DC143C",
+    "zeus_white": "#F0F0FF",
+    "hephaestus_orange": "#FF8C00",
+    "artemis_green": "#32CD32",
+    "poseidon_blue": "#1E90FF",
+    "hades_purple": "#9B59B6",
+    "dionysus_magenta": "#FF00FF",
+}
+
+
+# =============================================================================
 # EPIC HERO PIXEL ART — Divine Hermes with Caduceus Animation
 # =============================================================================
 
 HERMES_HERO_FRAME_1 = """\
 [dim #0A0A12]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/]
-[dim #1A1A38]░░[/][#2A2A50]╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]◈════════════════════════════════════════════════════════════════════════════════════════════════════════════════◈[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#2A2A50]║[/]                                                                                                              [#2A2A50]║[/][dim #1A1A38]░░[/]
-[dim #1A1A38]░░[/][#2A2A50]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]╔═══════════════════════════════════════╗[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]◈═══════════════════════════════════════◈[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#2A2A50]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣴⣾⣿⣿⣿⣿⣿⣿⣿⣷⣦⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [bold #FFEC8B]⚡ OLYMPUS ASCENDED ⚡[/]            [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#2A2A50]║[/]      [#555577]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [dim #00D4FF]Divine Orchestration System[/]       [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#2A2A50]║[/]      [#555577]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]╠═══════════════════════════════════════╣[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
@@ -41,19 +72,19 @@ HERMES_HERO_FRAME_1 = """\
 [dim #1A1A38]░░[/][#2A2A50]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]                                       [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#2A2A50]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠿⠿⠿⠿⠿⠟⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [bold #FFD700]⚕ HERMES[/] [dim #555577]— Divine Messenger[/]     [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#2A2A50]║[/]      [#FFD700]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [dim #00D4FF]route · spawn · synthesize[/]         [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
-[dim #1A1A38]░░[/][#2A2A50]║[/]      [#C9A227]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]╚═══════════════════════════════════════╝[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]      [#C9A227]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]◈═══════════════════════════════════════◈[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#2A2A50]║[/]      [#555577]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]                                                              [#2A2A50]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#2A2A50]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]                                                              [#2A2A50]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#2A2A50]║[/]                                                                                                              [#2A2A50]║[/][dim #1A1A38]░░[/]
-[dim #1A1A38]░░[/][#2A2A50]╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]◈════════════════════════════════════════════════════════════════════════════════════════════════════════════════◈[/][dim #1A1A38]░░[/]
 [dim #0A0A12]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/]\
 """
 
 HERMES_HERO_FRAME_2 = """\
 [dim #0A0A12]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/]
-[dim #1A1A38]░░[/][#3A3A6A]╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#3A3A6A]◈════════════════════════════════════════════════════════════════════════════════════════════════════════════════◈[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#3A3A6A]║[/]                                                                                                              [#3A3A6A]║[/][dim #1A1A38]░░[/]
-[dim #1A1A38]░░[/][#3A3A6A]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFEC8B]╔═══════════════════════════════════════╗[/]      [#3A3A6A]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#3A3A6A]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFEC8B]◈═══════════════════════════════════════◈[/]      [#3A3A6A]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#3A3A6A]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣴⣾⣿⣿⣿⣿⣿⣿⣿⣷⣦⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFEC8B]║[/]  [bold #FFD700]✦ OLYMPUS ASCENDED ✦[/]            [bold #FFEC8B]║[/]      [#3A3A6A]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#3A3A6A]║[/]      [#555577]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFEC8B]║[/]  [dim #00D4FF]Divine Orchestration System[/]       [bold #FFEC8B]║[/]      [#3A3A6A]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#3A3A6A]║[/]      [#555577]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFEC8B]╠═══════════════════════════════════════╣[/]      [#3A3A6A]║[/][dim #1A1A38]░░[/]
@@ -65,19 +96,19 @@ HERMES_HERO_FRAME_2 = """\
 [dim #1A1A38]░░[/][#3A3A6A]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFEC8B]║[/]                                       [bold #FFEC8B]║[/]      [#3A3A6A]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#3A3A6A]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠿⠿⠿⠿⠿⠟⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFEC8B]║[/]  [bold #FFEC8B]⚕ HERMES[/] [dim #555577]— Divine Messenger[/]     [bold #FFEC8B]║[/]      [#3A3A6A]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#3A3A6A]║[/]      [#FFEC8B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFEC8B]║[/]  [dim #00D4FF]route · spawn · synthesize[/]         [bold #FFEC8B]║[/]      [#3A3A6A]║[/][dim #1A1A38]░░[/]
-[dim #1A1A38]░░[/][#3A3A6A]║[/]      [#FFD700]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFEC8B]╚═══════════════════════════════════════╝[/]      [#3A3A6A]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#3A3A6A]║[/]      [#FFD700]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFEC8B]◈═══════════════════════════════════════◈[/]      [#3A3A6A]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#3A3A6A]║[/]      [#555577]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]                                                              [#3A3A6A]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#3A3A6A]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]                                                              [#3A3A6A]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#3A3A6A]║[/]                                                                                                              [#3A3A6A]║[/][dim #1A1A38]░░[/]
-[dim #1A1A38]░░[/][#3A3A6A]╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#3A3A6A]◈════════════════════════════════════════════════════════════════════════════════════════════════════════════════◈[/][dim #1A1A38]░░[/]
 [dim #0A0A12]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/]\
 """
 
 HERMES_HERO_FRAME_3 = """\
 [dim #0A0A12]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/]
-[dim #1A1A38]░░[/][#FFD700]╔════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#FFD700]◈════════════════════════════════════════════════════════════════════════════════════════════════════════════════◈[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#FFD700]║[/]                                                                                                              [#FFD700]║[/][dim #1A1A38]░░[/]
-[dim #1A1A38]░░[/][#FFD700]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]╔═══════════════════════════════════════╗[/]      [#FFD700]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#FFD700]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]◈═══════════════════════════════════════◈[/]      [#FFD700]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#FFD700]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣴⣾⣿⣿⣿⣿⣿⣿⣿⣷⣦⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [bold #FFD700]◈ OLYMPUS ASCENDED ◈[/]            [bold #FFD700]║[/]      [#FFD700]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#FFD700]║[/]      [#C9A227]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [dim #00D4FF]Divine Orchestration System[/]       [bold #FFD700]║[/]      [#FFD700]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#FFD700]║[/]      [#C9A227]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]╠═══════════════════════════════════════╣[/]      [#FFD700]║[/][dim #1A1A38]░░[/]
@@ -89,15 +120,36 @@ HERMES_HERO_FRAME_3 = """\
 [dim #1A1A38]░░[/][#FFD700]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]                                       [bold #FFD700]║[/]      [#FFD700]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#FFD700]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠿⠿⠿⠿⠿⠟⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [bold #FFD700]⚕ HERMES[/] [dim #555577]— Divine Messenger[/]     [bold #FFD700]║[/]      [#FFD700]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#FFD700]║[/]      [bold #FFD700]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [dim #00D4FF]route · spawn · synthesize[/]         [bold #FFD700]║[/]      [#FFD700]║[/][dim #1A1A38]░░[/]
-[dim #1A1A38]░░[/][#FFD700]║[/]      [#FFEC8B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]╚═══════════════════════════════════════╝[/]      [#FFD700]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#FFD700]║[/]      [#FFEC8B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]◈═══════════════════════════════════════◈[/]      [#FFD700]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#FFD700]║[/]      [#C9A227]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]                                                              [#FFD700]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#FFD700]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]                                                              [#FFD700]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#FFD700]║[/]                                                                                                              [#FFD700]║[/][dim #1A1A38]░░[/]
-[dim #1A1A38]░░[/][#FFD700]╚════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#FFD700]◈════════════════════════════════════════════════════════════════════════════════════════════════════════════════◈[/][dim #1A1A38]░░[/]
 [dim #0A0A12]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/]\
 """
 
 HERO_FRAMES = [HERMES_HERO_FRAME_1, HERMES_HERO_FRAME_2, HERMES_HERO_FRAME_3]
+
+
+# =============================================================================
+# DIVINE EXECUTION FLOW DIAGRAM — Shows god routing
+# =============================================================================
+
+FLOW_DIAGRAM = """\
+[dim #2A2A50]◈─────────────────────────────────────────────────────────────────────────────────────◈[/]
+[dim #2A2A50]│[/]  [bold #FFD700]⚡ DIVINE EXECUTION FLOW[/]                                                          [dim #2A2A50]│[/]
+[dim #2A2A50]│[/]                                                                                     [dim #2A2A50]│[/]
+[dim #2A2A50]│[/]   [#C0C0C0]△ ATHENA[/]  ──▶  [#32CD32]🏹 ARTEMIS[/]  ──▶  [#DC143C]⚔ ARES[/]  ──▶  [#FF8C00]🔨 HEPHAESTUS[/]           [dim #2A2A50]│[/]
+[dim #2A2A50]│[/]   [dim #555577]strategy[/]      [dim #555577]retrieval[/]       [dim #555577]execution[/]     [dim #555577]forge[/]                     [dim #2A2A50]│[/]
+[dim #2A2A50]│[/]       │              │               │              │                          [dim #2A2A50]│[/]
+[dim #2A2A50]│[/]       └──────────────┴───────────────┴──────────────┘                          [dim #2A2A50]│[/]
+[dim #2A2A50]│[/]                              │                                                  [dim #2A2A50]│[/]
+[dim #2A2A50]│[/]                              ▼                                                  [dim #2A2A50]│[/]
+[dim #2A2A50]│[/]                      [#FFD700]⚕ HERMES[/]  ◀──  [#9B59B6]🕯 HADES[/]  ◀──  [#1E90FF]🌊 POSEIDON[/]          [dim #2A2A50]│[/]
+[dim #2A2A50]│[/]                      [dim #555577]orchestrator[/]    [dim #555577]archive[/]        [dim #555577]flow[/]                  [dim #2A2A50]│[/]
+[dim #2A2A50]│[/]                                                                                     [dim #2A2A50]│[/]
+[dim #2A2A50]◈─────────────────────────────────────────────────────────────────────────────────────◈[/]\
+"""
 
 
 # =============================================================================
@@ -284,7 +336,7 @@ class GodLeaderboard(Static):
     activity: reactive[list] = reactive(list, always_update=True)
     
     def render(self) -> str:
-        header = "[bold #FFD700]🏆 DIVINE LEADERBOARD — God Activity Rankings[/]\n\n"
+        header = "[bold #FFD700]◈ DIVINE LEADERBOARD — God Activity Rankings[/]\n\n"
         header += "  [dim #555577]RANK  GOD           ACTIVITY                  CALLS    %[/]\n"
         header += "  [dim #2A2A50]" + "─" * 70 + "[/]\n"
         
@@ -305,7 +357,7 @@ class GodLeaderboard(Static):
 
 
 class PantheonStrip(Static):
-    """Compact pantheon strip showing all gods."""
+    """Compact pantheon strip showing all gods with divine styling."""
     
     gods: reactive[list] = reactive(list, always_update=True)
     activity: reactive[dict] = reactive(dict, always_update=True)
@@ -323,25 +375,36 @@ class PantheonStrip(Static):
             "Dionysus": "#FF00FF",
         }
         
+        header = "[bold #FFD700]◈ PANTHEON[/]  "
+        
         parts = []
         for god in self.gods[:10]:
             name = god.get("name", "?")
             icon = god.get("icon", "✦")
-            face = god.get("face", "(-_-)")
+            rank = god.get("rank", "???")
             color = god_colors.get(name, "#FFD700")
             
             stats = activity_map.get(name, {})
             calls = stats.get("calls", 0)
             status = stats.get("status", "idle")
             
-            status_color = "#00FF99" if status == "active" else "#FFD700" if status == "ready" else "#555577"
+            status_color = "#00FF99" if status == "active" else "#FFD700" if status == "ready" else "#3A3A6A"
             status_dot = "●" if status == "active" else "◐" if status == "ready" else "○"
             
             parts.append(
                 f"[{color}]{icon}[/][{status_color}]{status_dot}[/]"
             )
         
-        return "  ".join(parts)
+        return header + "  ".join(parts) + f"  [dim #555577]│ {len(self.gods)} gods watching[/]"
+
+
+class DivineFlowDiagram(Static):
+    """Divine execution flow diagram showing god routing."""
+    
+    active_god: reactive[str] = reactive("")
+    
+    def render(self) -> str:
+        return FLOW_DIAGRAM
 
 
 class ExecutionLanes(Static):
@@ -350,15 +413,18 @@ class ExecutionLanes(Static):
     lanes: reactive[list] = reactive(list, always_update=True)
     
     def render(self) -> str:
-        header = "[bold #FFD700]✦ EXECUTION LANES — Divine Tool Flow[/]\n\n"
+        header = "[bold #FFD700]◈ EXECUTION LANES — Divine Tool Flow[/]\n\n"
+        header += "  [dim #555577]LANE          GOD           ACTIVITY                  CALLS    LATENCY[/]\n"
+        header += "  [dim #2A2A50]" + "─" * 75 + "[/]\n"
         
         if not self.lanes:
-            return header + "[dim #555577]The lanes are quiet. No tool calls recorded.[/]"
+            return header + "  [dim #555577]The lanes are quiet. No tool calls recorded.[/]"
         
         lane_lines = [_make_exec_lane_live(lane) for lane in self.lanes]
         
         total_calls = sum(l.get("calls", 0) for l in self.lanes)
-        footer = f"\n\n  [dim #555577]Total divine strikes: [bold #FFD700]{total_calls}[/][/]"
+        footer = f"\n  [dim #2A2A50]{'─' * 75}[/]\n"
+        footer += f"  [bold #FFD700]TOTAL DIVINE STRIKES:[/]  [bold #00FF99]{total_calls:,}[/]"
         
         return header + "\n".join(lane_lines) + footer
 
@@ -370,7 +436,7 @@ class ActivityDashboard(Static):
     stats: reactive[dict] = reactive(dict, always_update=True)
     
     def render(self) -> str:
-        header = "[bold #FFD700]📊 ACTIVITY OVERVIEW[/]\n\n"
+        header = "[bold #FFD700]◈ ACTIVITY OVERVIEW — Divine Metrics[/]\n\n"
         
         heatmap = _make_activity_heatmap(self.daily_data)
         header += f"  [dim #00A8CC]14-Day Heatmap[/]  {heatmap}\n\n"
@@ -380,9 +446,9 @@ class ActivityDashboard(Static):
             messages = [d.get("messages", 0) for d in self.daily_data]
             costs = [d.get("cost", 0) for d in self.daily_data]
             
-            header += f"  [dim #00A8CC]Sessions [/]  {_make_sparkline(sessions, 30, '#00FF99')}\n"
-            header += f"  [dim #00A8CC]Messages [/]  {_make_sparkline(messages, 30, '#00D4FF')}\n"
-            header += f"  [dim #00A8CC]Cost     [/]  {_make_sparkline(costs, 30, '#FFD700')}\n"
+            header += f"  [dim #00A8CC]Σεσσιονς [/]  {_make_sparkline(sessions, 30, '#00FF99')}\n"
+            header += f"  [dim #00A8CC]Μεσσαγες [/]  {_make_sparkline(messages, 30, '#00D4FF')}\n"
+            header += f"  [dim #00A8CC]Δραχμαί  [/]  {_make_sparkline(costs, 30, '#FFD700')}\n"
         
         return header
 
@@ -396,10 +462,10 @@ class DivineNotifications(Static):
         from hermes_cli.dashboard.data import get_skin_notifications_config
         icons = get_skin_notifications_config()
         
-        header = "[bold #FFD700]⚕ DIVINE PROCLAMATIONS[/]\n\n"
+        header = "[bold #FFD700]◈ DIVINE PROCLAMATIONS — Oracle Messages[/]\n\n"
         
         if not self.notifications:
-            return header + "[dim #555577]The oracle is silent. No recent decrees.[/]"
+            return header + "  [dim #555577]The oracle is silent. No recent decrees.[/]"
         
         lines = [_make_notification(n, icons) for n in self.notifications[:8]]
         return header + "\n".join(lines)
@@ -413,10 +479,10 @@ class CostTracker(Static):
     def render(self) -> str:
         from hermes_cli.dashboard.data import format_cost
         
-        header = "[bold #FFD700]💰 ΔΡΑΧΜΑΙ — Divine Treasury[/]\n\n"
+        header = "[bold #FFD700]◈ ΔΡΑΧΜΑΙ — Divine Treasury[/]\n\n"
         
         if not self.costs:
-            return header + "[dim #555577]Consulting the treasury...[/]"
+            return header + "  [dim #555577]Consulting the treasury...[/]"
         
         daily = self.costs.get("daily", 0)
         weekly = self.costs.get("weekly", 0)
@@ -424,16 +490,16 @@ class CostTracker(Static):
         total = self.costs.get("total", 0)
         
         lines = [
-            f"  [dim #00A8CC]Today[/]     [bold #00FF99]{format_cost(daily)}[/]",
-            f"  [dim #00A8CC]Week[/]      [bold #00D4FF]{format_cost(weekly)}[/]",
-            f"  [dim #00A8CC]Month[/]     [bold #FFD700]{format_cost(monthly)}[/]",
-            f"  [dim #00A8CC]All Time[/]  [bold #FF4444]{format_cost(total)}[/]",
+            f"  [dim #00A8CC]Σήμερα   [/]  [bold #00FF99]{format_cost(daily)}[/]",
+            f"  [dim #00A8CC]Εβδομάδα [/]  [bold #00D4FF]{format_cost(weekly)}[/]",
+            f"  [dim #00A8CC]Μήνας    [/]  [bold #FFD700]{format_cost(monthly)}[/]",
+            f"  [dim #00A8CC]Σύνολο   [/]  [bold #FF4444]{format_cost(total)}[/]",
         ]
         
         model_breakdown = self.costs.get("model_breakdown", [])
         if model_breakdown:
             lines.append("")
-            lines.append("  [dim #555577]─── By Model ───[/]")
+            lines.append("  [dim #2A2A50]─── By Model ───[/]")
             for m in model_breakdown[:3]:
                 model_name = (m.get("model", "?")).split("/")[-1][:20]
                 cost = format_cost(m.get("cost", 0))
@@ -450,10 +516,12 @@ class RecentSessions(Static):
     def render(self) -> str:
         from hermes_cli.dashboard.data import format_timestamp, format_cost
         
-        header = "[bold #FFD700]📜 RECENT DECREES[/]\n\n"
+        header = "[bold #FFD700]◈ RECENT DECREES — Session Archive[/]\n\n"
+        header += "  [dim #555577]TIME          TITLE                                MODEL           MSG  TOOLS  COST[/]\n"
+        header += "  [dim #2A2A50]" + "─" * 90 + "[/]\n"
         
         if not self.sessions:
-            return header + "[dim #555577]No decrees yet. The scrolls await.[/]"
+            return header + "  [dim #555577]No decrees yet. The scrolls await.[/]"
         
         lines = []
         for i, s in enumerate(self.sessions[:8]):
@@ -464,8 +532,8 @@ class RecentSessions(Static):
             msgs = s.get("message_count", 0)
             tools = s.get("tool_call_count", 0)
             
-            marker = "[#FFD700]§[/]" if i % 2 == 0 else "[#00A8CC]·[/]"
-            tool_indicator = f"[#FF4444]⚔{tools}[/]" if tools > 10 else f"[dim #555577]⚔{tools}[/]"
+            marker = "[#FFD700]✦[/]" if i % 2 == 0 else "[#00A8CC]·[/]"
+            tool_indicator = f"[#DC143C]⚔{tools}[/]" if tools > 10 else f"[dim #555577]⚔{tools}[/]"
             
             lines.append(
                 f"  {marker}  [dim #00A8CC]{ts:<12}[/]  [#E0F7FF]{title:<35}[/]  "
@@ -515,15 +583,15 @@ class ModelStatus(Static):
         ctx = self.model_info.get("context_length")
         
         if "openrouter" in provider.lower():
-            provider_icon = "🌐"
+            provider_icon = "◈"
             provider_color = "#00D4FF"
             provider_label = "OpenRouter"
         elif "lmstudio" in provider.lower() or "custom:" in provider.lower():
-            provider_icon = "🖥"
+            provider_icon = "⚙"
             provider_color = "#00FF99"
             provider_label = "LM Studio"
         elif "ollama" in provider.lower():
-            provider_icon = "🦙"
+            provider_icon = "◎"
             provider_color = "#FF8C00"
             provider_label = "Ollama"
         else:
@@ -544,7 +612,7 @@ class ModelStatus(Static):
             lms_indicator = "  [#FF4444]○ LMS[/]"
         
         return (
-            f"[bold #FFD700]⚕ ACTIVE MODEL[/]  "
+            f"[bold #FFD700]◈ ACTIVE MODEL[/]  "
             f"[{provider_color}]{provider_icon} {provider_label}[/]  "
             f"[bold #E0F7FF]{model_short}[/]"
             f"{ctx_str}{lms_indicator}"
@@ -557,15 +625,15 @@ class MemoryPreview(Static):
     entries: reactive[list] = reactive(list, always_update=True)
     
     def render(self) -> str:
-        header = "[bold #FFD700]🕯 ΜΝΗΜΗ — Divine Memory[/]\n\n"
+        header = "[bold #FFD700]◈ ΜΝΗΜΗ — Divine Memory (Hades Archive)[/]\n\n"
         
         if not self.entries:
-            return header + "[dim #555577]The tablets are blank.[/]"
+            return header + "  [dim #555577]The tablets are blank.[/]"
         
         lines = []
         for entry in self.entries[:5]:
             text = entry[:50] + ("..." if len(entry) > 50 else "")
-            lines.append(f"  [dim #00D4FF]§[/] [dim #E0F7FF]{text}[/]")
+            lines.append(f"  [#9B59B6]🕯[/] [dim #E0F7FF]{text}[/]")
         
         return header + "\n".join(lines)
 
@@ -576,10 +644,10 @@ class DivineAchievements(Static):
     stats: reactive[dict] = reactive(dict, always_update=True)
     
     def render(self) -> str:
-        header = "[bold #FFD700]🏅 DIVINE ACHIEVEMENTS[/]\n\n"
+        header = "[bold #FFD700]◈ DIVINE ACHIEVEMENTS — Badges of Honor[/]\n\n"
         
         if not self.stats:
-            return header + "[dim #555577]No achievements yet.[/]"
+            return header + "  [dim #555577]No achievements yet.[/]"
         
         sessions = self.stats.get("total_sessions", 0)
         messages = self.stats.get("total_messages", 0)
@@ -588,23 +656,23 @@ class DivineAchievements(Static):
         achievements = []
         
         if sessions >= 100:
-            achievements.append(("[#FFD700]🌟[/]", "Century", "100+ sessions"))
+            achievements.append(("[#FFD700]⚡[/]", "Olympian", "100+ sessions"))
         elif sessions >= 50:
-            achievements.append(("[#C0C0C0]⭐[/]", "Veteran", "50+ sessions"))
+            achievements.append(("[#C0C0C0]✦[/]", "Demigod", "50+ sessions"))
         elif sessions >= 10:
-            achievements.append(("[#CD7F32]✦[/]", "Initiate", "10+ sessions"))
+            achievements.append(("[#CD7F32]◈[/]", "Initiate", "10+ sessions"))
         
         if tools >= 1000:
             achievements.append(("[#FFD700]⚔[/]", "Forge Master", "1000+ tool calls"))
         elif tools >= 500:
-            achievements.append(("[#C0C0C0]🔨[/]", "Craftsman", "500+ tool calls"))
+            achievements.append(("[#FF8C00]🔨[/]", "Craftsman", "500+ tool calls"))
         elif tools >= 100:
-            achievements.append(("[#CD7F32]🛠[/]", "Apprentice", "100+ tool calls"))
+            achievements.append(("[#CD7F32]⚙[/]", "Apprentice", "100+ tool calls"))
         
         if messages >= 1000:
-            achievements.append(("[#FFD700]📜[/]", "Chronicler", "1000+ messages"))
+            achievements.append(("[#FFD700]⚕[/]", "Chronicler", "1000+ messages"))
         elif messages >= 500:
-            achievements.append(("[#C0C0C0]📝[/]", "Scribe", "500+ messages"))
+            achievements.append(("[#C0C0C0]§[/]", "Scribe", "500+ messages"))
         
         if not achievements:
             return header + "  [dim #555577]Begin your divine journey to earn badges![/]"
@@ -648,10 +716,10 @@ class GodGallery(Static):
     selected_god: reactive[int] = reactive(0)
     
     def render(self) -> str:
-        header = "[bold #FFD700]⚡ PANTHEON GALLERY — Divine Portraits ⚡[/]\n\n"
+        header = "[bold #FFD700]◈ PANTHEON GALLERY — Divine Portraits ◈[/]\n\n"
         
         if not self.gods:
-            return header + "[dim #555577]The gods have not yet revealed themselves...[/]"
+            return header + "  [dim #555577]The gods have not yet revealed themselves...[/]"
         
         # Get the selected god's pixel art
         god = self.gods[self.selected_god % len(self.gods)]
@@ -664,15 +732,15 @@ class GodGallery(Static):
         quotes = god.get("quotes", [])
         lore = god.get("lore", "")
         
-        # Navigation strip
+        # Navigation strip with divine styling
         nav_parts = []
         for i, g in enumerate(self.gods):
             g_icon = g.get("icon", "✦")
             g_color = g.get("color", "#555577")
             if i == self.selected_god % len(self.gods):
-                nav_parts.append(f"[bold {g_color}]▶{g_icon}◀[/]")
+                nav_parts.append(f"[bold {g_color}]⟪{g_icon}⟫[/]")
             else:
-                nav_parts.append(f"[dim #555577]{g_icon}[/]")
+                nav_parts.append(f"[dim #3A3A6A]{g_icon}[/]")
         
         nav_line = "  " + "  ".join(nav_parts) + "\n\n"
         
@@ -752,6 +820,317 @@ class GodMiniGallery(Static):
 
 
 # =============================================================================
+# ZEUS OVERSEER STATUS — Task Completion Monitor
+# =============================================================================
+
+class ZeusOverseerStatus(Static):
+    """Zeus Overseer status widget showing task completion monitoring.
+    
+    Displays:
+    - Overseer enabled/disabled status
+    - Last evaluation result (complete/incomplete)
+    - Confidence level
+    - Latest nudge if any
+    """
+    
+    overseer_data: reactive[dict] = reactive(dict, always_update=True)
+    
+    def render(self) -> str:
+        header = "[bold #F0F0FF]👁 ZEUS OVERSEER — Task Monitor[/]\n"
+        header += "[dim #555577]" + "─" * 50 + "[/]\n"
+        
+        if not self.overseer_data:
+            return header + "\n  [dim #555577]Overseer not yet activated.[/]"
+        
+        enabled = self.overseer_data.get("enabled", False)
+        model = self.overseer_data.get("model", "unknown")
+        
+        lines = []
+        
+        # Status line
+        if enabled:
+            lines.append(f"  [#00FF99]● ACTIVE[/]  [dim #555577]Model: {model}[/]")
+        else:
+            lines.append(f"  [#FF4444]○ DISABLED[/]  [dim #555577]Enable in config.yaml[/]")
+            return header + "\n".join(lines)
+        
+        # Last evaluation
+        last_eval = self.overseer_data.get("last_evaluation", {})
+        if last_eval:
+            complete = last_eval.get("complete", False)
+            confidence = last_eval.get("confidence", 0)
+            reasoning = last_eval.get("reasoning", "")
+            nudge = last_eval.get("nudge", "")
+            timestamp = last_eval.get("timestamp", "")
+            
+            lines.append("")
+            
+            # Completion status with color
+            if complete:
+                lines.append(f"  [bold #00FF99]✓ TASK COMPLETE[/]  [dim #555577]({confidence:.0%} confident)[/]")
+            else:
+                lines.append(f"  [bold #FFD700]⚡ IN PROGRESS[/]  [dim #555577]({confidence:.0%} confident)[/]")
+            
+            # Reasoning
+            if reasoning:
+                reason_short = reasoning[:60] + "..." if len(reasoning) > 60 else reasoning
+                lines.append(f"  [dim #555577]{reason_short}[/]")
+            
+            # Nudge (if not complete)
+            if nudge and not complete:
+                lines.append("")
+                lines.append(f"  [bold #00D4FF]NUDGE:[/] [#E0F7FF]{nudge}[/]")
+            
+            # Timestamp
+            if timestamp:
+                lines.append(f"\n  [dim #3A3A6A]Last check: {timestamp}[/]")
+        else:
+            lines.append("\n  [dim #555577]No evaluations yet. Complete a turn to see status.[/]")
+        
+        return header + "\n".join(lines)
+
+
+# =============================================================================
+# SESSION NOTES VIEWER — Live Session Tracking
+# =============================================================================
+
+class SessionNotesViewer(Static):
+    """Live session notes viewer showing important observations from current session.
+    
+    Displays:
+    - Recent turns with user prompts and key observations
+    - Tools used and files modified
+    - Errors encountered
+    - Key decisions made
+    """
+    
+    notes_data: reactive[dict] = reactive(dict, always_update=True)
+    
+    def render(self) -> str:
+        header = "[bold #FFD700]◈ DIVINE CHRONICLE — Session Notes[/]\n"
+        header += "[dim #555577]" + "─" * 72 + "[/]\n"
+        
+        if not self.notes_data or not self.notes_data.get("turns"):
+            session_id = self.notes_data.get("session_id", "")
+            if session_id:
+                return header + f"\n  [dim #555577]📜 Session: {session_id[:20]}...[/]\n  [dim #555577]No turns recorded yet. Awaiting divine action...[/]"
+            return header + "\n  [dim #555577]📜 No active session. Start a conversation to see notes.[/]"
+        
+        session_id = self.notes_data.get("session_id", "unknown")
+        model = self.notes_data.get("model", "")
+        turns = self.notes_data.get("turns", [])
+        
+        lines = []
+        
+        # Session header
+        lines.append(f"  [bold #00D4FF]SESSION:[/] [dim #555577]{session_id[:30]}...[/]")
+        if model:
+            lines.append(f"  [bold #00D4FF]MODEL:[/] [dim #555577]{model}[/]")
+        lines.append("")
+        
+        # Show recent turns (last 5)
+        recent_turns = turns[-5:] if len(turns) > 5 else turns
+        
+        for turn in recent_turns:
+            turn_num = turn.get("turn", 0)
+            timestamp = turn.get("timestamp", "")
+            user_msg = turn.get("user", "")[:60]
+            if len(turn.get("user", "")) > 60:
+                user_msg += "..."
+            
+            # Turn header
+            lines.append(f"  [bold #FFD700]TURN {turn_num}[/] [dim #555577]| {timestamp}[/]")
+            lines.append(f"    [#E0F7FF]💬 {user_msg}[/]")
+            
+            # Tools used
+            tools = turn.get("tools", [])
+            if tools:
+                tool_str = ", ".join(tools[:4])
+                if len(tools) > 4:
+                    tool_str += f" +{len(tools) - 4}"
+                lines.append(f"    [#00D4FF]⚡ {tool_str}[/]")
+            
+            # Files modified
+            files = turn.get("files_modified", [])
+            if files:
+                for f in files[:2]:
+                    short_path = f.split("/")[-1] if "/" in f else f
+                    lines.append(f"    [#00FF99]📝 {short_path}[/]")
+                if len(files) > 2:
+                    lines.append(f"    [dim #555577]+{len(files) - 2} more files[/]")
+            
+            # Errors
+            errors = turn.get("errors", [])
+            if errors:
+                for err in errors[:1]:
+                    err_short = err[:40] + "..." if len(err) > 40 else err
+                    lines.append(f"    [#FF4444]⚠ {err_short}[/]")
+            
+            # Key observations
+            observations = turn.get("observations", [])
+            if observations:
+                for obs in observations[:2]:
+                    obs_short = obs[:45] + "..." if len(obs) > 45 else obs
+                    lines.append(f"    [#9B59B6]• {obs_short}[/]")
+            
+            # Response preview
+            response = turn.get("response", "")[:50]
+            if response:
+                if len(turn.get("response", "")) > 50:
+                    response += "..."
+                lines.append(f"    [dim #555577]→ {response}[/]")
+            
+            lines.append("")
+        
+        # Stats footer
+        total_turns = len(turns)
+        total_tools = sum(len(t.get("tools", [])) for t in turns)
+        total_files = len(set(f for t in turns for f in t.get("files_modified", [])))
+        
+        lines.append("[dim #555577]" + "─" * 72 + "[/]")
+        lines.append(f"  [dim #555577]📊 {total_turns} turns | {total_tools} tool calls | {total_files} files modified[/]")
+        
+        return header + "\n".join(lines)
+
+
+# =============================================================================
+# FLEET OBSERVER — Live Subagent Monitoring
+# =============================================================================
+
+class FleetObserver(Static):
+    """Live subagent/god activity monitor with full observability.
+    
+    Shows:
+    - Active subagents with status, progress bars, and current tool
+    - Thinking snippets from each god
+    - Tool call history with timing
+    - Real-time progress updates from FleetMonitor
+    """
+    
+    fleet_data: reactive[dict] = reactive(dict, always_update=True)
+    
+    def render(self) -> str:
+        header = "[bold #FFD700]◈ DIVINE FLEET OBSERVER — Live Subagent Activity[/]\n"
+        header += "[dim #555577]" + "─" * 72 + "[/]\n"
+        
+        if not self.fleet_data or not self.fleet_data.get("agents"):
+            return header + "\n  [dim #555577]⚡ No active subagents. Hermes awaits your command.[/]"
+        
+        agents = self.fleet_data.get("agents", {})
+        task = self.fleet_data.get("task", "")
+        elapsed = self.fleet_data.get("elapsed", 0)
+        
+        lines = []
+        
+        # Task header
+        if task:
+            task_short = task[:60] + "..." if len(task) > 60 else task
+            mins, secs = divmod(int(elapsed), 60)
+            lines.append(f"  [bold #00D4FF]TASK:[/] [#E0F7FF]{task_short}[/]  [dim #555577]⏱ {mins}:{secs:02d}[/]\n")
+        
+        # Sort: active agents first, then by name
+        active_statuses = ("spawning", "thinking", "querying", "processing")
+        sorted_agents = sorted(
+            agents.items(),
+            key=lambda x: (0 if x[1].get("status") in active_statuses else 1, x[0])
+        )
+        
+        god_colors = {
+            "Hermes": "#FFD700", "Athena": "#C0C0C0", "Apollo": "#FFE066",
+            "Ares": "#DC143C", "Zeus": "#F0F0FF", "Hephaestus": "#FF8C00",
+            "Artemis": "#32CD32", "Poseidon": "#1E90FF", "Hades": "#9B59B6",
+            "Dionysus": "#FF00FF",
+        }
+        
+        status_icons = {
+            "idle": "○", "spawning": "◐", "thinking": "◑", "querying": "◒",
+            "processing": "◓", "responding": "◔", "complete": "●", "failed": "✗",
+        }
+        
+        for name, agent in sorted_agents:
+            if name == "Hermes":
+                continue  # Skip orchestrator, show subagents only
+            
+            color = god_colors.get(name, "#FFD700")
+            status = agent.get("status", "idle")
+            status_icon = status_icons.get(status, "◈")
+            
+            # Status color
+            if status in ("thinking", "querying", "processing", "spawning"):
+                status_color = "#00FF99"
+            elif status == "complete":
+                status_color = "#00D4FF"
+            elif status == "failed":
+                status_color = "#FF4444"
+            else:
+                status_color = "#555577"
+            
+            # Progress bar
+            progress = agent.get("progress_pct", 0)
+            step = agent.get("step", 0)
+            max_iter = agent.get("max_iterations", 50)
+            bar_len = 20
+            filled = int(progress / 100 * bar_len)
+            bar = "█" * filled + "░" * (bar_len - filled)
+            
+            # Current tool
+            current_tool = agent.get("current_tool", "")
+            tool_preview = agent.get("tool_preview", "")
+            
+            # Agent header line
+            lines.append(
+                f"  [{status_color}]{status_icon}[/] [bold {color}]{name:<12}[/]  "
+                f"[{status_color}]{bar}[/] [{status_color}]{progress:>3.0f}%[/]  "
+                f"[dim #555577]{step}/{max_iter} calls[/]"
+            )
+            
+            # Goal (if available)
+            goal = agent.get("goal", "")
+            if goal:
+                goal_short = goal[:50] + "..." if len(goal) > 50 else goal
+                lines.append(f"     [dim #00A8CC]⚡ {goal_short}[/]")
+            
+            # Current tool (if active)
+            if current_tool and status in ("querying", "processing"):
+                tool_line = f"     [#00D4FF]→ {current_tool}[/]"
+                if tool_preview:
+                    preview_short = tool_preview[:35] + "..." if len(tool_preview) > 35 else tool_preview
+                    tool_line += f"  [dim #555577]{preview_short}[/]"
+                lines.append(tool_line)
+            
+            # Thinking snippet (if available)
+            thinking = agent.get("thinking_snippet", "")
+            if thinking and status == "thinking":
+                think_short = thinking[:55] + "..." if len(thinking) > 55 else thinking
+                lines.append(f"     [dim #9B59B6]💭 {think_short}[/]")
+            
+            # Recent tool history
+            tool_history = agent.get("tool_history", [])
+            if tool_history:
+                recent = tool_history[-3:]  # Last 3 tools
+                history_parts = []
+                for t in recent:
+                    t_name = t.get("name", "?")[:8]
+                    t_dur = t.get("duration", 0)
+                    t_status = t.get("status", "ok")
+                    t_color = "#00FF99" if t_status == "success" else "#FF4444" if t_status == "error" else "#555577"
+                    history_parts.append(f"[{t_color}]{t_name}[/][dim #555577]({t_dur:.1f}s)[/]")
+                lines.append(f"     [dim #555577]history:[/] " + " → ".join(history_parts))
+            
+            lines.append("")  # Spacer between agents
+        
+        # Events feed
+        events = self.fleet_data.get("events", [])
+        if events:
+            lines.append("[dim #555577]" + "─" * 72 + "[/]")
+            lines.append("[bold #C9A227]◈ RECENT EVENTS[/]")
+            for evt in events[-5:]:
+                lines.append(f"  [dim #555577]{evt}[/]")
+        
+        return header + "\n".join(lines)
+
+
+# =============================================================================
 # MAIN VIEW
 # =============================================================================
 
@@ -759,37 +1138,63 @@ class AssemblyView(ScrollableContainer):
     """The Assembly — OLYMPUS ASCENDED main dashboard view.
     
     Features:
-    - Epic animated hero art with Hermes
+    - Cinematic animated hero art with Hermes pixel art
+    - Divine execution flow diagram showing god routing
     - Quick model status with LM Studio / OpenRouter indicator
     - God Stats Leaderboard with rankings
-    - Compact pantheon strip
+    - Compact pantheon strip with status indicators
     - God Gallery with epic braille pixel art portraits
-    - Live execution lanes
-    - Activity dashboard with heatmap
-    - Divine notifications
-    - Cost tracker
-    - Recent sessions
-    - Divine achievements
+    - Live execution lanes with real tool call data
+    - Activity dashboard with heatmap and sparklines
+    - Divine notifications (oracle messages)
+    - Cost tracker (Drachmai treasury)
+    - Recent sessions (decrees)
+    - Divine achievements (badges of honor)
     """
     
     _animation_timer = None
     _gallery_timer = None
+    _fleet_timer = None
+    _notes_timer = None
     
     def compose(self) -> ComposeResult:
+        # Hero banner with animated Hermes art
         yield HeroArt(id="hero-art", classes="hero-art")
+        
+        # Status bar: model + quick stats
         yield ModelStatus(id="model-status", classes="bento-gold")
         yield QuickStats(id="quick-stats", classes="bento-gold")
+        
+        # Fleet Observer — Live subagent monitoring (prominent position)
+        yield FleetObserver(id="fleet-observer", classes="divine-panel-gold")
+        
+        # Divine flow diagram showing god routing
+        yield DivineFlowDiagram(id="flow-diagram", classes="divine-panel")
+        
+        # Pantheon strip with god status indicators
         yield PantheonStrip(id="pantheon-strip", classes="divine-panel")
-        yield GodLeaderboard(id="god-leaderboard", classes="divine-panel-gold")
-        yield GodGallery(id="god-gallery", classes="divine-panel-gold")
+        
+        # Main content: Leaderboard + Gallery side by side
+        with Horizontal(classes="bento-row"):
+            yield GodLeaderboard(id="god-leaderboard", classes="divine-panel-gold")
+            yield GodGallery(id="god-gallery", classes="divine-panel-gold")
+        
+        # Execution lanes + Activity dashboard
         with Horizontal(classes="bento-row"):
             yield ExecutionLanes(id="exec-lanes", classes="divine-panel")
             yield ActivityDashboard(id="activity-dashboard", classes="divine-panel")
+        
+        # Sessions + Cost/Achievements
         with Horizontal(classes="bento-row"):
             yield RecentSessions(id="recent-sessions", classes="divine-panel")
             with Vertical():
                 yield CostTracker(id="cost-tracker", classes="divine-panel-gold")
                 yield DivineAchievements(id="achievements", classes="divine-panel")
+        
+        # Session Notes — Live chronicle of current session
+        yield SessionNotesViewer(id="session-notes", classes="divine-panel-gold")
+        
+        # Notifications at the bottom
         yield DivineNotifications(id="notifications", classes="divine-panel")
     
     @work(thread=True)
@@ -820,14 +1225,117 @@ class AssemblyView(ScrollableContainer):
         
         gods_with_art = get_gods_with_pixel_art()
         
+        # Get live fleet data from FleetMonitor
+        fleet_data = {}
+        try:
+            from agent.fleet_monitor import get_fleet_monitor
+            fm = get_fleet_monitor()
+            fleet_data = fm.get_fleet_snapshot()
+        except Exception:
+            pass
+        
+        # Get session notes data
+        session_notes_data = self._load_session_notes()
+        
         self.app.call_from_thread(
             self._apply_data, 
             sessions, stats, memories, pantheon, 
             lanes, activity, notifications, costs, daily,
-            model_info, lms_status, gods_with_art
+            model_info, lms_status, gods_with_art, fleet_data, session_notes_data
         )
     
-    def _apply_data(self, sessions, stats, memories, pantheon, lanes, activity, notifications, costs, daily, model_info, lms_status, gods_with_art):
+    def _load_session_notes(self) -> dict:
+        """Load the most recent session notes file."""
+        try:
+            from hermes_constants import get_hermes_home
+            from pathlib import Path
+            import re
+            
+            sessions_dir = get_hermes_home() / "sessions"
+            if not sessions_dir.exists():
+                return {}
+            
+            # Find the most recent notes file
+            notes_files = sorted(sessions_dir.glob("notes_*.txt"), key=lambda p: p.stat().st_mtime, reverse=True)
+            if not notes_files:
+                return {}
+            
+            latest_notes = notes_files[0]
+            content = latest_notes.read_text(encoding="utf-8")
+            
+            # Parse the notes file
+            session_id = ""
+            model = ""
+            turns = []
+            
+            # Extract session ID from header
+            session_match = re.search(r"SESSION NOTES: (\S+)", content)
+            if session_match:
+                session_id = session_match.group(1)
+            
+            # Extract model
+            model_match = re.search(r"Model: (.+)", content)
+            if model_match:
+                model = model_match.group(1).strip()
+            
+            # Parse turns
+            turn_blocks = re.split(r"-{50,}", content)
+            for block in turn_blocks:
+                turn_match = re.search(r"TURN (\d+) \| (\d+:\d+:\d+)", block)
+                if not turn_match:
+                    continue
+                
+                turn_num = int(turn_match.group(1))
+                timestamp = turn_match.group(2)
+                
+                # Extract user message
+                user_match = re.search(r"USER: (.+?)(?:\n|$)", block)
+                user_msg = user_match.group(1).strip() if user_match else ""
+                
+                # Extract tools
+                tools = []
+                tool_matches = re.findall(r"→ (\w+)", block)
+                tools = tool_matches[:6]  # Limit to 6
+                
+                # Extract files modified
+                files_modified = []
+                file_matches = re.findall(r"• (.+\.(?:py|js|ts|yaml|json|md|txt))", block)
+                files_modified = file_matches[:5]
+                
+                # Extract errors
+                errors = []
+                error_matches = re.findall(r"⚠ (.+?)(?:\n|$)", block)
+                errors = error_matches[:2]
+                
+                # Extract observations
+                observations = []
+                obs_matches = re.findall(r"\[(?:Finding|Decision|Fixed|Created)\] (.+?)(?:\n|$)", block)
+                observations = obs_matches[:3]
+                
+                # Extract response
+                response_match = re.search(r"RESPONSE: (.+?)(?:\n|$)", block)
+                response = response_match.group(1).strip() if response_match else ""
+                
+                turns.append({
+                    "turn": turn_num,
+                    "timestamp": timestamp,
+                    "user": user_msg,
+                    "tools": tools,
+                    "files_modified": files_modified,
+                    "errors": errors,
+                    "observations": observations,
+                    "response": response,
+                })
+            
+            return {
+                "session_id": session_id,
+                "model": model,
+                "turns": turns,
+            }
+        except Exception:
+            return {}
+    
+    def _apply_data(self, sessions, stats, memories, pantheon, lanes, activity, notifications, costs, daily, model_info, lms_status, gods_with_art, fleet_data=None, session_notes_data=None):
         """Apply loaded data to widgets."""
         self.query_one("#recent-sessions", RecentSessions).sessions = sessions
         self.query_one("#quick-stats", QuickStats).stats = stats
@@ -857,6 +1365,14 @@ class AssemblyView(ScrollableContainer):
         if gods_with_art:
             gallery = self.query_one("#god-gallery", GodGallery)
             gallery.gods = gods_with_art
+        
+        # Update fleet observer with live subagent data
+        if fleet_data:
+            self.query_one("#fleet-observer", FleetObserver).fleet_data = fleet_data
+        
+        # Update session notes viewer
+        if session_notes_data:
+            self.query_one("#session-notes", SessionNotesViewer).notes_data = session_notes_data
     
     def on_show(self) -> None:
         """Called when the view is shown."""
@@ -868,11 +1384,15 @@ class AssemblyView(ScrollableContainer):
         self._stop_animation()
     
     def _start_animation(self) -> None:
-        """Start the hero art and gallery animation timers."""
+        """Start the hero art, gallery, fleet observer, and session notes timers."""
         if self._animation_timer is None:
             self._animation_timer = self.set_interval(2.5, self._animate_hero)
         if self._gallery_timer is None:
             self._gallery_timer = self.set_interval(5.0, self._cycle_gallery)
+        if self._fleet_timer is None:
+            self._fleet_timer = self.set_interval(1.0, self._refresh_fleet)
+        if self._notes_timer is None:
+            self._notes_timer = self.set_interval(3.0, self._refresh_notes)
     
     def _stop_animation(self) -> None:
         """Stop all animation timers."""
@@ -882,6 +1402,12 @@ class AssemblyView(ScrollableContainer):
         if self._gallery_timer is not None:
             self._gallery_timer.stop()
             self._gallery_timer = None
+        if self._fleet_timer is not None:
+            self._fleet_timer.stop()
+            self._fleet_timer = None
+        if self._notes_timer is not None:
+            self._notes_timer.stop()
+            self._notes_timer = None
     
     def _animate_hero(self) -> None:
         """Cycle the hero art frame."""
@@ -896,5 +1422,24 @@ class AssemblyView(ScrollableContainer):
         try:
             gallery = self.query_one("#god-gallery", GodGallery)
             gallery.next_god()
+        except Exception:
+            pass
+    
+    def _refresh_fleet(self) -> None:
+        """Refresh the fleet observer with live subagent data."""
+        try:
+            from agent.fleet_monitor import get_fleet_monitor
+            fm = get_fleet_monitor()
+            fleet_data = fm.get_fleet_snapshot()
+            self.query_one("#fleet-observer", FleetObserver).fleet_data = fleet_data
+        except Exception:
+            pass
+    
+    def _refresh_notes(self) -> None:
+        """Refresh the session notes viewer with latest data."""
+        try:
+            session_notes_data = self._load_session_notes()
+            if session_notes_data:
+                self.query_one("#session-notes", SessionNotesViewer).notes_data = session_notes_data
         except Exception:
             pass

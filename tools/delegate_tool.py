@@ -80,9 +80,10 @@ def _build_child_progress_callback(
 ) -> Optional[callable]:
     """Build a callback that relays child agent tool calls to the parent display.
 
-    Two display paths:
-      CLI:     prints tree-view lines above the parent's delegation spinner
-      Gateway: batches tool names and relays to parent's progress callback
+    Three display paths:
+      CLI:          prints tree-view lines above the parent's delegation spinner
+      Gateway:      batches tool names and relays to parent's progress callback
+      FleetMonitor: emits detailed events for dashboard/TUI observability
 
     Returns None if no display mechanism is available, in which case the
     child agent runs with no progress callback (identical to current behavior).
@@ -90,7 +91,14 @@ def _build_child_progress_callback(
     spinner = getattr(parent_agent, '_delegate_spinner', None)
     parent_cb = getattr(parent_agent, 'tool_progress_callback', None)
 
-    if not spinner and not parent_cb:
+    # Always try to get fleet monitor for observability
+    try:
+        from agent.fleet_monitor import get_fleet_monitor
+        fleet_monitor = get_fleet_monitor()
+    except Exception:
+        fleet_monitor = None
+
+    if not spinner and not parent_cb and not fleet_monitor:
         return None  # No display → no callback → zero behavior change
 
     # Show 1-indexed prefix only in batch mode (multiple tasks)
@@ -106,6 +114,8 @@ def _build_child_progress_callback(
     _BATCH_SIZE = 5
     _batch: List[str] = []
     _call_count = [0]
+    _tool_start_time = [0.0]
+    _current_tool = [""]
 
     def _callback(event_type: str, tool_name: str = None, preview: str = None, args=None, **kwargs):
         # event_type is one of: "tool.started", "tool.completed",
@@ -113,6 +123,12 @@ def _build_child_progress_callback(
 
         if event_type in ("_thinking", "reasoning.available"):
             text = preview or tool_name or ""
+            # Notify fleet monitor of thinking
+            if fleet_monitor and god_name:
+                try:
+                    fleet_monitor.on_god_thinking(god_name, text)
+                except Exception:
+                    pass
             if spinner:
                 short = (text[:75] + "...") if len(text) > 75 else text
                 try:
@@ -125,10 +141,29 @@ def _build_child_progress_callback(
             return
 
         if event_type == "tool.completed":
+            # Notify fleet monitor of tool completion
+            if fleet_monitor and god_name and _current_tool[0]:
+                duration = time.time() - _tool_start_time[0] if _tool_start_time[0] else 0.0
+                status = kwargs.get("status", "success")
+                try:
+                    fleet_monitor.on_god_tool_complete(god_name, _current_tool[0], duration, status)
+                except Exception:
+                    pass
+            _current_tool[0] = ""
             return
 
         # tool.started — display and batch for parent relay
         _call_count[0] += 1
+        _tool_start_time[0] = time.time()
+        _current_tool[0] = tool_name or ""
+
+        # Notify fleet monitor of tool start
+        if fleet_monitor and god_name:
+            try:
+                fleet_monitor.on_god_tool_start(god_name, tool_name or "", preview or "")
+            except Exception:
+                pass
+
         if spinner:
             short = (preview[:65] + "...") if preview and len(preview) > 65 else (preview or "")
             from agent.display import get_tool_emoji
@@ -180,6 +215,7 @@ def _build_child_progress_callback(
                 pass
 
     _callback._flush = _flush
+    _callback._call_count = _call_count  # expose for progress tracking
     return _callback
 
 
@@ -318,15 +354,17 @@ def _run_single_child(
     child_start = time.monotonic()
 
     _god_name = _kwargs.get("god_name", "")
+    _max_iter = getattr(child, 'max_iterations', 50)
     try:
         from agent.fleet_monitor import get_fleet_monitor
         _fm = get_fleet_monitor()
         _fm.on_god_spawned(
             name=_god_name or f"Subagent-{task_index + 1}",
             goal=goal[:60] if goal else "",
+            max_iterations=_max_iter,
         )
     except Exception:
-        pass
+        _fm = None
 
     _spinner = getattr(parent_agent, '_delegate_spinner', None)
     if _spinner:
@@ -390,19 +428,29 @@ def _run_single_child(
         else:
             status = "failed"
 
-        try:
-            from agent.fleet_monitor import get_fleet_monitor
-            _fm = get_fleet_monitor()
-            _agent_display = _god_name or f"Subagent-{task_index + 1}"
-            if status == "completed":
-                _fm.on_god_complete(_agent_display, result_preview=summary[:80] if summary else "")
-            else:
-                _fm.on_god_failed(
+        # Emit final progress update and completion to fleet monitor
+        _agent_display = _god_name or f"Subagent-{task_index + 1}"
+        if _fm:
+            try:
+                # Final progress update with token counts
+                _input_tokens_final = getattr(child, "session_prompt_tokens", 0) or 0
+                _output_tokens_final = getattr(child, "session_completion_tokens", 0) or 0
+                _fm.on_god_progress(
                     _agent_display,
-                    error="interrupted" if interrupted else "no output",
+                    step=api_calls,
+                    api_calls=api_calls,
+                    tokens_in=_input_tokens_final if isinstance(_input_tokens_final, int) else 0,
+                    tokens_out=_output_tokens_final if isinstance(_output_tokens_final, int) else 0,
                 )
-        except Exception:
-            pass
+                if status == "completed":
+                    _fm.on_god_complete(_agent_display, result_preview=summary[:80] if summary else "", api_calls=api_calls)
+                else:
+                    _fm.on_god_failed(
+                        _agent_display,
+                        error="interrupted" if interrupted else "no output",
+                    )
+            except Exception:
+                pass
 
         if _spinner:
             _elapsed = round(time.monotonic() - child_start)

@@ -1,12 +1,15 @@
-"""Fleet monitor — tracks Hermes agent fleet and mirrors to Telegram.
+"""Fleet monitor — tracks Hermes agent fleet and mirrors to Telegram + CLI.
 
 Hooks into existing AIAgent callbacks (thinking, tool_progress, status, step)
 and delegate_tool lifecycle events to maintain a live fleet state, then pushes
-formatted updates to a Telegram chat so you can manage the pantheon on the go.
+formatted updates to a Telegram chat and CLI observers for full observability.
 
 Telegram config is read from:
   1. ~/.hermes/config.yaml  gateway.platforms.telegram.token + home_channel.chat_id
   2. Env overrides: FLEET_TELEGRAM_TOKEN, FLEET_TELEGRAM_CHAT_ID
+
+CLI observability is enabled via:
+  display.subagent_observability: full | summary | off
 
 Usage from cli.py (after agent creation):
     from agent.fleet_monitor import init_fleet_monitor, get_fleet_monitor
@@ -195,6 +198,16 @@ GOD_ART: Dict[str, str] = {
 # ---------------------------------------------------------------------------
 
 @dataclass
+class ToolCall:
+    """Record of a single tool invocation."""
+    name: str
+    preview: str = ""
+    start_time: float = field(default_factory=time.time)
+    duration: float = 0.0
+    status: str = "running"  # running, success, error
+
+
+@dataclass
 class AgentState:
     name: str
     role: str = ""
@@ -202,10 +215,29 @@ class AgentState:
     current_tool: str = ""
     tool_preview: str = ""
     step: int = 0
+    max_iterations: int = 50
     start_time: float = field(default_factory=time.time)
     last_activity: float = field(default_factory=time.time)
     parent: str = "Hermes"
     last_event: str = ""
+    goal: str = ""
+    thinking_snippet: str = ""
+    tool_history: List[ToolCall] = field(default_factory=list)
+    tokens_in: int = 0
+    tokens_out: int = 0
+    api_calls: int = 0
+
+    @property
+    def progress_pct(self) -> float:
+        """Estimated progress as percentage (0-100)."""
+        if self.max_iterations <= 0:
+            return 0.0
+        return min(100.0, (self.step / self.max_iterations) * 100)
+
+    @property
+    def elapsed_seconds(self) -> float:
+        """Seconds since agent started."""
+        return time.time() - self.start_time
 
 
 @dataclass
@@ -221,9 +253,10 @@ class FleetState:
 # ---------------------------------------------------------------------------
 
 class FleetMonitor:
-    """Central fleet state tracker with Telegram push."""
+    """Central fleet state tracker with Telegram push and CLI observer support."""
 
     MAX_EVENTS = 30
+    MAX_TOOL_HISTORY = 20  # per agent
     DEBOUNCE_NORMAL = 4.0   # seconds between routine pushes
     DEBOUNCE_URGENT = 0.8   # seconds between urgent pushes
 
@@ -235,8 +268,11 @@ class FleetMonitor:
         self._tg_chat_id: Optional[str] = None
         self._enabled = False
         self._verbose_mode = "normal"   # quiet / normal / god
+        self._observability = "summary"  # off / summary / full
         self._last_msg_id: Optional[int] = None
         self._push_thread: Optional[threading.Thread] = None
+        # CLI observers — callbacks that receive real-time fleet updates
+        self._cli_observers: List[Callable[[str, Dict[str, Any]], None]] = []
 
     # ------------------------------------------------------------------
     # Init
@@ -283,6 +319,79 @@ class FleetMonitor:
         with self._lock:
             self._log(f"Verbose mode: {self._verbose_mode.upper()}")
         self._push(urgent=True)
+
+    def set_observability(self, level: str) -> None:
+        """Set CLI observability level: off / summary / full."""
+        self._observability = level.lower().strip()
+
+    # ------------------------------------------------------------------
+    # CLI Observer API — real-time fleet updates for dashboard/TUI
+    # ------------------------------------------------------------------
+
+    def register_observer(self, callback: Callable[[str, Dict[str, Any]], None]) -> None:
+        """Register a CLI observer callback.
+        
+        Callback receives (event_type, data) where event_type is one of:
+          - "god_spawned": data = {name, role, goal, parent}
+          - "god_thinking": data = {name, snippet}
+          - "god_tool_start": data = {name, tool, preview}
+          - "god_tool_complete": data = {name, tool, duration, status}
+          - "god_progress": data = {name, step, max_iterations, api_calls}
+          - "god_complete": data = {name, result_preview, duration, api_calls}
+          - "god_failed": data = {name, error}
+          - "fleet_update": data = {agents: Dict[name, AgentState]}
+        """
+        if callback not in self._cli_observers:
+            self._cli_observers.append(callback)
+
+    def unregister_observer(self, callback: Callable) -> None:
+        """Remove a CLI observer callback."""
+        if callback in self._cli_observers:
+            self._cli_observers.remove(callback)
+
+    def _notify_observers(self, event_type: str, data: Dict[str, Any]) -> None:
+        """Notify all registered CLI observers of an event."""
+        if self._observability == "off":
+            return
+        for cb in self._cli_observers:
+            try:
+                cb(event_type, data)
+            except Exception as e:
+                logger.debug("Observer callback error: %s", e)
+
+    def get_fleet_snapshot(self) -> Dict[str, Any]:
+        """Return a snapshot of current fleet state for dashboard rendering."""
+        with self._lock:
+            return {
+                "task": self._state.task,
+                "start_time": self._state.start_time,
+                "elapsed": time.time() - self._state.start_time,
+                "agents": {
+                    name: {
+                        "name": a.name,
+                        "role": a.role,
+                        "status": a.status,
+                        "goal": a.goal,
+                        "current_tool": a.current_tool,
+                        "tool_preview": a.tool_preview,
+                        "thinking_snippet": a.thinking_snippet,
+                        "step": a.step,
+                        "max_iterations": a.max_iterations,
+                        "progress_pct": a.progress_pct,
+                        "elapsed": a.elapsed_seconds,
+                        "api_calls": a.api_calls,
+                        "tokens_in": a.tokens_in,
+                        "tokens_out": a.tokens_out,
+                        "tool_history": [
+                            {"name": t.name, "preview": t.preview, "duration": t.duration, "status": t.status}
+                            for t in a.tool_history[-5:]  # last 5 tools
+                        ],
+                        "parent": a.parent,
+                    }
+                    for name, a in self._state.agents.items()
+                },
+                "events": list(self._state.events[-10:]),
+            }
 
     # ------------------------------------------------------------------
     # Callback wrappers (wrap existing cli.py callbacks)
@@ -356,28 +465,96 @@ class FleetMonitor:
             self._log(f"Task received: {task[:60]}")
         self._push(urgent=True)
 
-    def on_god_spawned(self, name: str, role: str = "", goal: str = "", parent: str = "Hermes") -> None:
+    def on_god_spawned(
+        self, name: str, role: str = "", goal: str = "", parent: str = "Hermes",
+        max_iterations: int = 50,
+    ) -> None:
         with self._lock:
             resolved_role = role or GOD_ROLES.get(name, "Subagent")
             self._state.agents[name] = AgentState(
-                name=name, role=resolved_role, status="spawning", parent=parent
+                name=name, role=resolved_role, status="spawning", parent=parent,
+                goal=goal, max_iterations=max_iterations,
             )
             hermes = self._get_or_create("Hermes")
             hermes.status = "processing"
             goal_short = goal[:50] if goal else resolved_role
             self._log(f"Hermes → {name}: {goal_short}")
         self._push(urgent=True)
+        self._notify_observers("god_spawned", {
+            "name": name, "role": resolved_role, "goal": goal, "parent": parent,
+        })
 
-    def on_god_complete(self, name: str, result_preview: str = "") -> None:
+    def on_god_thinking(self, name: str, snippet: str) -> None:
+        """Called when a subagent emits thinking/reasoning content."""
+        with self._lock:
+            agent = self._get_or_create(name)
+            agent.status = "thinking"
+            agent.thinking_snippet = (snippet[:80] if snippet else "")
+            agent.last_activity = time.time()
+            if self._verbose_mode == "god":
+                self._log(f"{name} 💭 {snippet[:40]}")
+        if self._observability == "full":
+            self._notify_observers("god_thinking", {"name": name, "snippet": snippet})
+
+    def on_god_tool_start(self, name: str, tool: str, preview: str = "") -> None:
+        """Called when a subagent starts a tool call."""
+        with self._lock:
+            agent = self._get_or_create(name)
+            agent.status = "querying"
+            agent.current_tool = tool
+            agent.tool_preview = (preview or "")[:50]
+            agent.last_activity = time.time()
+            agent.tool_history.append(ToolCall(name=tool, preview=preview[:50]))
+            if len(agent.tool_history) > self.MAX_TOOL_HISTORY:
+                agent.tool_history.pop(0)
+            self._log(f"{name}: {tool} → {preview[:30]}" if preview else f"{name}: {tool}")
+        self._push(urgent=False)
+        self._notify_observers("god_tool_start", {"name": name, "tool": tool, "preview": preview})
+
+    def on_god_tool_complete(self, name: str, tool: str, duration: float, status: str = "success") -> None:
+        """Called when a subagent completes a tool call."""
+        with self._lock:
+            agent = self._get_or_create(name)
+            agent.current_tool = ""
+            agent.last_activity = time.time()
+            # Update the last tool in history
+            if agent.tool_history and agent.tool_history[-1].name == tool:
+                agent.tool_history[-1].duration = duration
+                agent.tool_history[-1].status = status
+        if self._observability == "full":
+            self._notify_observers("god_tool_complete", {
+                "name": name, "tool": tool, "duration": duration, "status": status,
+            })
+
+    def on_god_progress(self, name: str, step: int, api_calls: int = 0, tokens_in: int = 0, tokens_out: int = 0) -> None:
+        """Called to update subagent progress metrics."""
+        with self._lock:
+            agent = self._get_or_create(name)
+            agent.step = step
+            agent.api_calls = api_calls
+            agent.tokens_in = tokens_in
+            agent.tokens_out = tokens_out
+            agent.last_activity = time.time()
+        self._notify_observers("god_progress", {
+            "name": name, "step": step, "max_iterations": agent.max_iterations,
+            "api_calls": api_calls, "tokens_in": tokens_in, "tokens_out": tokens_out,
+        })
+
+    def on_god_complete(self, name: str, result_preview: str = "", api_calls: int = 0) -> None:
         with self._lock:
             agent = self._get_or_create(name)
             agent.status = "complete"
             agent.current_tool = ""
             agent.last_activity = time.time()
+            agent.api_calls = api_calls
             short = result_preview[:50] if result_preview else "done"
             agent.last_event = short
+            duration = agent.elapsed_seconds
             self._log(f"{name} ✓ {short}")
         self._push(urgent=True)
+        self._notify_observers("god_complete", {
+            "name": name, "result_preview": result_preview, "duration": duration, "api_calls": api_calls,
+        })
 
     def on_god_failed(self, name: str, error: str = "") -> None:
         with self._lock:
@@ -387,6 +564,7 @@ class FleetMonitor:
             agent.last_event = error[:60] if error else "failed"
             self._log(f"⚠ {name} failed: {error[:50]}")
         self._push(urgent=True)
+        self._notify_observers("god_failed", {"name": name, "error": error})
 
     def on_response_complete(self) -> None:
         with self._lock:

@@ -374,11 +374,37 @@ DEFAULT_CONFIG = {
         "skin": "default",
         "tool_progress_command": False,  # Enable /verbose command in messaging gateway
         "tool_preview_length": 0,  # Max chars for tool call previews (0 = no limit, show full paths/commands)
+        # Subagent observability level for CLI:
+        #   "full"    — show all subagent activity (thinking, tool calls, progress)
+        #   "summary" — show subagent spawns and completions only (default)
+        #   "off"     — no subagent progress display
+        "subagent_observability": "full",
+        # Session notes: write human-readable .txt file tracking each turn
+        #   true  — create notes_<session_id>.txt in ~/.hermes/sessions/
+        #   false — disable session notes
+        "session_notes": True,
     },
 
     # Privacy settings
     "privacy": {
         "redact_pii": False,  # When True, hash user IDs and strip phone numbers from LLM context
+    },
+    
+    # Zeus Overseer — lightweight supervisor agent for task completion monitoring
+    # Uses a small local model (Gemma 4B, Phi-3, etc.) to watch the primary agent
+    "overseer": {
+        "enabled": False,  # Set to true to enable Zeus Overseer
+        "model": "gemma2:2b",  # Small model for monitoring (Ollama format)
+        "base_url": "http://localhost:11434/v1",  # Ollama default
+        "api_key": "",  # Leave empty for Ollama
+        "timeout": 10.0,  # Seconds to wait for response
+        # When to run the overseer:
+        #   "every_turn" — evaluate after every agent turn
+        #   "on_completion" — only when agent says it's done
+        #   "on_idle" — when agent stops making tool calls
+        "trigger": "on_completion",
+        # Inject nudges into conversation when not complete
+        "inject_nudges": True,
     },
     
     # Text-to-speech configuration

@@ -2497,14 +2497,27 @@ def cmd_dashboard(args):
 def cmd_zeus(args):
     """Launch the Zeus Monitor or chat with Zeus."""
     # Check for chat mode
-    if getattr(args, 'chat', False) or getattr(args, 'message', None):
+    if getattr(args, 'chat', False) or (getattr(args, 'message', None) and not getattr(args, 'drive', False) and not getattr(args, 'auto', False)):
         _run_zeus_chat(args)
         return
     
-    # Default: launch monitor
+    # Determine mode
+    if getattr(args, 'auto', False):
+        mode = "auto"
+    elif getattr(args, 'drive', False):
+        mode = "drive"
+    else:
+        mode = "watch"
+    
+    # Get goal from message args if provided
+    goal = ""
+    if getattr(args, 'message', None):
+        goal = " ".join(args.message)
+    
+    # Launch monitor
     _require_tty("zeus")
     from hermes_cli.zeus_monitor import run_monitor
-    run_monitor()
+    run_monitor(mode=mode, goal=goal)
 
 
 def _run_zeus_chat(args):
@@ -5600,8 +5613,33 @@ For more help on a command:
     # =========================================================================
     zeus_parser = subparsers.add_parser(
         "zeus",
-        help="Monitor Hermes session or chat with Zeus overseer",
-        description="Zeus — Monitor Hermes activity or chat with the divine overseer"
+        help="Monitor Hermes session, chat with Zeus, or let Zeus drive autonomously",
+        description="""Zeus — Divine supervisor for Hermes
+
+Modes:
+  (default)     Watch mode — read-only monitoring of Hermes activity
+  --drive       Drive mode — Zeus responds when Hermes stops, keeps it working
+  --auto        Auto mode  — Zeus drives Hermes autonomously all day
+  --chat        Chat mode  — Interactive conversation with Zeus
+
+Examples:
+  hermes zeus                    # Watch Hermes activity
+  hermes zeus --drive            # Zeus nudges Hermes when it stops
+  hermes zeus --auto             # Full autopilot — Zeus runs your business
+  hermes zeus --auto "Build my SaaS MVP"  # Auto mode with a goal
+  hermes zeus --chat             # Chat with Zeus directly
+  hermes zeus "What's the status?"        # Quick question to Zeus
+"""
+    )
+    zeus_parser.add_argument(
+        "--drive", "-d",
+        action="store_true",
+        help="Drive mode: Zeus responds when Hermes stops working"
+    )
+    zeus_parser.add_argument(
+        "--auto", "-a",
+        action="store_true",
+        help="Auto mode: Zeus drives Hermes autonomously all day"
     )
     zeus_parser.add_argument(
         "--chat", "-c",
@@ -5616,7 +5654,7 @@ For more help on a command:
     zeus_parser.add_argument(
         "message",
         nargs="*",
-        help="Send a single message to Zeus (implies --chat)"
+        help="Goal for auto/drive mode, or message for chat mode"
     )
     zeus_parser.set_defaults(func=cmd_zeus)
 

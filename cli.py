@@ -8399,6 +8399,10 @@ class HermesCLI:
         
         # Background thread to process inputs and run agent
         def process_loop():
+            # Track last Zeus queue check time
+            _last_zeus_check = 0.0
+            _ZEUS_CHECK_INTERVAL = 2.0  # Check every 2 seconds
+            
             while not self._should_exit:
                 try:
                     # Check for pending input with timeout
@@ -8408,6 +8412,22 @@ class HermesCLI:
                         # Periodic config watcher — auto-reload MCP on mcp_servers change
                         if not self._agent_running:
                             self._check_config_mcp_changes()
+                            
+                            # Check Zeus queue for messages from the Zeus monitor
+                            import time as _t
+                            _now = _t.time()
+                            if _now - _last_zeus_check >= _ZEUS_CHECK_INTERVAL:
+                                _last_zeus_check = _now
+                                try:
+                                    from hermes_cli.zeus_monitor import pop_queued_message
+                                    zeus_msg = pop_queued_message()
+                                    if zeus_msg:
+                                        msg_content = zeus_msg.get("message", "")
+                                        if msg_content:
+                                            _cprint(f"\n  {_DIM}⚡ Zeus sends:{_RST} {msg_content[:60]}{'...' if len(msg_content) > 60 else ''}")
+                                            self._pending_input.put(msg_content)
+                                except Exception:
+                                    pass  # Zeus queue not available
                         continue
                     
                     if not user_input:

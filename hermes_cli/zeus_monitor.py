@@ -1,21 +1,26 @@
-"""Zeus Monitor — Standalone dashboard to watch Hermes activity.
+"""Zeus Monitor — Autonomous supervisor that drives Hermes.
 
-Run in a separate terminal to monitor your active Hermes session:
-    hermes zeus
+Run in a separate terminal to supervise your Hermes session:
+    hermes zeus              # Watch mode (read-only)
+    hermes zeus --drive      # Drive mode (Zeus responds when Hermes stops)
+    hermes zeus --auto       # Full auto mode (Zeus runs autonomously all day)
 
-Shows:
-- Live session notes (what Hermes is doing)
-- Zeus Overseer evaluations (task completion status)
-- Recent tool calls and files modified
-- Real-time updates every 2 seconds
+In drive/auto mode, Zeus:
+- Watches for when Hermes completes a turn
+- Evaluates if the task is done
+- Sends follow-up instructions to keep Hermes working
+- Can run your business autonomously
 """
 
+import json
 import os
 import re
 import sys
 import time
+import threading
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 # Rich for beautiful terminal output
 try:
@@ -35,6 +40,112 @@ def get_hermes_home() -> Path:
     """Get the Hermes home directory."""
     return Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes"))
 
+
+# ============================================================================
+# Message Queue — File-based IPC between Zeus and Hermes
+# ============================================================================
+
+ZEUS_QUEUE_FILE = "zeus_queue.json"
+
+
+def get_queue_path() -> Path:
+    """Get the Zeus message queue file path."""
+    return get_hermes_home() / ZEUS_QUEUE_FILE
+
+
+def queue_message_for_hermes(message: str, priority: str = "normal") -> bool:
+    """Queue a message for Hermes to pick up.
+    
+    Args:
+        message: The message/instruction for Hermes
+        priority: "normal", "high", or "urgent"
+        
+    Returns:
+        True if queued successfully
+    """
+    queue_path = get_queue_path()
+    
+    try:
+        # Load existing queue
+        if queue_path.exists():
+            queue = json.loads(queue_path.read_text(encoding="utf-8"))
+        else:
+            queue = {"messages": [], "last_updated": None}
+        
+        # Add new message
+        queue["messages"].append({
+            "id": f"zeus_{int(time.time() * 1000)}",
+            "message": message,
+            "priority": priority,
+            "timestamp": datetime.now().isoformat(),
+            "source": "zeus_monitor",
+        })
+        queue["last_updated"] = datetime.now().isoformat()
+        
+        # Write atomically
+        tmp_path = queue_path.with_suffix(".tmp")
+        tmp_path.write_text(json.dumps(queue, indent=2), encoding="utf-8")
+        tmp_path.rename(queue_path)
+        
+        return True
+    except Exception as e:
+        print(f"Failed to queue message: {e}")
+        return False
+
+
+def get_queued_messages() -> list:
+    """Get all queued messages (for Hermes to consume)."""
+    queue_path = get_queue_path()
+    
+    if not queue_path.exists():
+        return []
+    
+    try:
+        queue = json.loads(queue_path.read_text(encoding="utf-8"))
+        return queue.get("messages", [])
+    except Exception:
+        return []
+
+
+def pop_queued_message() -> Optional[dict]:
+    """Pop the next message from the queue (FIFO)."""
+    queue_path = get_queue_path()
+    
+    if not queue_path.exists():
+        return None
+    
+    try:
+        queue = json.loads(queue_path.read_text(encoding="utf-8"))
+        messages = queue.get("messages", [])
+        
+        if not messages:
+            return None
+        
+        # Pop first message (FIFO)
+        msg = messages.pop(0)
+        queue["messages"] = messages
+        queue["last_updated"] = datetime.now().isoformat()
+        
+        # Write back
+        tmp_path = queue_path.with_suffix(".tmp")
+        tmp_path.write_text(json.dumps(queue, indent=2), encoding="utf-8")
+        tmp_path.rename(queue_path)
+        
+        return msg
+    except Exception:
+        return None
+
+
+def clear_queue():
+    """Clear all queued messages."""
+    queue_path = get_queue_path()
+    if queue_path.exists():
+        queue_path.unlink()
+
+
+# ============================================================================
+# Session Notes Parsing
+# ============================================================================
 
 def get_latest_session_notes() -> dict:
     """Load the most recent session notes file."""
@@ -86,6 +197,9 @@ def get_latest_session_notes() -> dict:
             response_match = re.search(r"RESPONSE: (.+?)(?:\n|$)", block)
             response = response_match.group(1).strip() if response_match else ""
             
+            stats_match = re.search(r"STATS: (.+?)(?:\n|$)", block)
+            stats = stats_match.group(1).strip() if stats_match else ""
+            
             turns.append({
                 "turn": turn_num,
                 "timestamp": timestamp,
@@ -93,6 +207,7 @@ def get_latest_session_notes() -> dict:
                 "tools": tools[:6],
                 "files": files[:5],
                 "response": response,
+                "stats": stats,
             })
         
         # Parse Zeus Overseer evaluations
@@ -110,6 +225,7 @@ def get_latest_session_notes() -> dict:
         "overseer_evals": overseer_evals,
         "file_path": str(latest_notes),
         "file_mtime": latest_notes.stat().st_mtime,
+        "raw_content": content,
     }
 
 
@@ -123,14 +239,153 @@ def get_overseer_config() -> dict:
         return {}
 
 
-def build_layout(data: dict, overseer_cfg: dict) -> Layout:
+# ============================================================================
+# Zeus Brain — Decision Making
+# ============================================================================
+
+class ZeusBrain:
+    """Zeus's decision-making engine for autonomous operation."""
+    
+    def __init__(self):
+        self._overseer = None
+        self._last_turn_count = 0
+        self._last_eval_time = 0
+        self._consecutive_incomplete = 0
+        self._session_goal = ""
+        self._auto_mode = False
+        
+    def get_overseer(self):
+        """Get or create the Zeus Overseer instance."""
+        if self._overseer is None:
+            try:
+                from agent.zeus_overseer import get_overseer
+                self._overseer = get_overseer()
+            except Exception:
+                pass
+        return self._overseer
+    
+    def set_session_goal(self, goal: str):
+        """Set the high-level goal for this session."""
+        self._session_goal = goal
+    
+    def should_intervene(self, data: dict) -> bool:
+        """Check if Zeus should intervene (new turn completed)."""
+        turns = data.get("turns", [])
+        current_count = len(turns)
+        
+        if current_count > self._last_turn_count:
+            self._last_turn_count = current_count
+            return True
+        return False
+    
+    def evaluate_and_respond(self, data: dict) -> Optional[str]:
+        """Evaluate the session and generate a response if needed.
+        
+        Returns:
+            A message to send to Hermes, or None if no action needed
+        """
+        overseer = self.get_overseer()
+        if not overseer or not overseer.enabled:
+            return None
+        
+        turns = data.get("turns", [])
+        if not turns:
+            return None
+        
+        # Get the last turn info
+        last_turn = turns[-1]
+        last_response = last_turn.get("response", "")
+        
+        # Get session context
+        session_notes = data.get("raw_content", "")[-3000:]
+        
+        # Determine the task (use session goal or last user message)
+        task = self._session_goal
+        if not task:
+            for turn in reversed(turns):
+                user_msg = turn.get("user", "")
+                if user_msg and not user_msg.startswith("[Zeus"):
+                    task = user_msg
+                    break
+        
+        if not task:
+            task = "Continue working on the current task"
+        
+        # Evaluate with Zeus
+        try:
+            result = overseer.evaluate(
+                task=task,
+                session_notes=session_notes,
+                last_response=last_response,
+            )
+        except Exception as e:
+            return f"[Zeus: Evaluation error - {str(e)[:50]}]"
+        
+        # Decide what to do
+        if result.complete:
+            self._consecutive_incomplete = 0
+            
+            if self._auto_mode:
+                # In auto mode, ask for next task or wait
+                return None  # Task complete, wait for new instructions
+            else:
+                return None  # Let human decide next steps
+        
+        # Task not complete
+        self._consecutive_incomplete += 1
+        
+        # Generate follow-up instruction
+        if result.nudge:
+            return f"[⚡ Zeus says: {result.nudge}] Please continue."
+        elif self._consecutive_incomplete > 3:
+            return "[⚡ Zeus: You seem stuck. Try a different approach or ask for clarification.]"
+        else:
+            return "[⚡ Zeus: Task not complete. Please continue working.]"
+    
+    def generate_autonomous_instruction(self, data: dict, business_context: str = "") -> Optional[str]:
+        """Generate an autonomous instruction based on business context.
+        
+        Used in full auto mode to keep Hermes working on business tasks.
+        """
+        overseer = self.get_overseer()
+        if not overseer or not overseer.enabled:
+            return None
+        
+        # Use Zeus's chat capability to generate next steps
+        session_notes = data.get("raw_content", "")[-2000:]
+        
+        prompt = f"""Based on the session so far, what should the agent work on next?
+
+Session context:
+{session_notes}
+
+Business context:
+{business_context if business_context else "General development and maintenance tasks."}
+
+Provide a clear, actionable instruction for the agent. Be specific."""
+
+        try:
+            response = overseer.chat(prompt, session_context=session_notes)
+            if response:
+                return f"[⚡ Zeus commands: {response}]"
+        except Exception:
+            pass
+        
+        return None
+
+
+# ============================================================================
+# Dashboard UI
+# ============================================================================
+
+def build_layout(data: dict, overseer_cfg: dict, zeus_brain: ZeusBrain, mode: str = "watch") -> Layout:
     """Build the dashboard layout."""
     layout = Layout()
     
-    # Split into left (main) and right (overseer) panels
+    # Split into left (main) and right (overseer + input) panels
     layout.split_row(
         Layout(name="main", ratio=2),
-        Layout(name="overseer", ratio=1),
+        Layout(name="sidebar", ratio=1),
     )
     
     # Main panel: Session notes
@@ -140,13 +395,18 @@ def build_layout(data: dict, overseer_cfg: dict) -> Layout:
         Layout(name="activity", ratio=1),
     )
     
+    # Sidebar: Overseer + mode info
+    layout["sidebar"].split_column(
+        Layout(name="overseer", ratio=2),
+        Layout(name="mode", size=8),
+    )
+    
     # Header
     session_id = data.get("session_id", "No active session")[:40]
     model = data.get("model", "unknown")
     header_text = Text()
-    header_text.append("⚡ HERMES MONITOR", style="bold yellow")
+    header_text.append("⚡ ZEUS MONITOR", style="bold yellow")
     header_text.append(f"  │  Session: {session_id}", style="dim")
-    header_text.append(f"  │  Model: {model}", style="dim cyan")
     layout["header"].update(Panel(header_text, box=box.SIMPLE))
     
     # Turns panel
@@ -155,13 +415,12 @@ def build_layout(data: dict, overseer_cfg: dict) -> Layout:
     turns_table.add_column("#", style="yellow", width=4)
     turns_table.add_column("Time", style="dim", width=8)
     turns_table.add_column("User", style="white", ratio=2)
-    turns_table.add_column("Tools", style="cyan", ratio=1)
+    turns_table.add_column("Tools", style="cyan", width=8)
     turns_table.add_column("Response", style="dim", ratio=2)
     
     for turn in turns[-8:]:  # Last 8 turns
-        tools_str = ", ".join(turn.get("tools", [])[:3])
-        if len(turn.get("tools", [])) > 3:
-            tools_str += "..."
+        tools_count = len(turn.get("tools", []))
+        tools_str = f"{tools_count} tools" if tools_count else "-"
         
         user_short = turn.get("user", "")[:40]
         if len(turn.get("user", "")) > 40:
@@ -184,21 +443,26 @@ def build_layout(data: dict, overseer_cfg: dict) -> Layout:
     
     layout["turns"].update(Panel(turns_table, title="[bold yellow]📜 Session Turns[/]", border_style="yellow"))
     
-    # Activity panel (recent files)
+    # Activity panel (recent files + queue status)
     all_files = []
     for turn in turns[-5:]:
         all_files.extend(turn.get("files", []))
-    unique_files = list(dict.fromkeys(all_files))[-6:]  # Last 6 unique files
+    unique_files = list(dict.fromkeys(all_files))[-4:]
     
-    files_text = Text()
+    activity_text = Text()
     if unique_files:
         for f in unique_files:
             short = f.split("/")[-1] if "/" in f else f
-            files_text.append(f"  📝 {short}\n", style="green")
+            activity_text.append(f"  📝 {short}\n", style="green")
     else:
-        files_text.append("  No files modified yet", style="dim")
+        activity_text.append("  No files modified yet\n", style="dim")
     
-    layout["activity"].update(Panel(files_text, title="[bold green]Recent Files[/]", border_style="green"))
+    # Show queue status
+    queued = get_queued_messages()
+    if queued:
+        activity_text.append(f"\n  📬 {len(queued)} message(s) queued for Hermes\n", style="yellow")
+    
+    layout["activity"].update(Panel(activity_text, title="[bold green]Activity[/]", border_style="green"))
     
     # Overseer panel
     overseer_content = Text()
@@ -217,7 +481,7 @@ def build_layout(data: dict, overseer_cfg: dict) -> Layout:
     evals = data.get("overseer_evals", [])
     if evals:
         overseer_content.append("Recent Evaluations:\n", style="bold white")
-        for ev in evals[-5:]:
+        for ev in evals[-4:]:
             msg = ev.get("message", "")
             ts = ev.get("timestamp", "")
             
@@ -227,13 +491,10 @@ def build_layout(data: dict, overseer_cfg: dict) -> Layout:
                 overseer_content.append(f"  ⚡ ", style="yellow")
             
             overseer_content.append(f"{ts} ", style="dim")
-            # Truncate long messages
-            msg_short = msg[:40] + "..." if len(msg) > 40 else msg
+            msg_short = msg[:35] + "..." if len(msg) > 35 else msg
             overseer_content.append(f"{msg_short}\n", style="white")
     else:
         overseer_content.append("No evaluations yet.\n", style="dim")
-        overseer_content.append("Complete a turn to see\n", style="dim")
-        overseer_content.append("Zeus's assessment.", style="dim")
     
     layout["overseer"].update(Panel(
         overseer_content, 
@@ -241,18 +502,71 @@ def build_layout(data: dict, overseer_cfg: dict) -> Layout:
         border_style="white"
     ))
     
+    # Mode panel
+    mode_text = Text()
+    if mode == "watch":
+        mode_text.append("👁 WATCH MODE\n", style="bold cyan")
+        mode_text.append("Read-only monitoring\n", style="dim")
+        mode_text.append("Use --drive to enable\n", style="dim")
+        mode_text.append("Zeus interventions", style="dim")
+    elif mode == "drive":
+        mode_text.append("🚗 DRIVE MODE\n", style="bold yellow")
+        mode_text.append("Zeus responds when\n", style="dim")
+        mode_text.append("Hermes stops working\n", style="dim")
+        mode_text.append(f"Interventions: {zeus_brain._consecutive_incomplete}", style="yellow")
+    elif mode == "auto":
+        mode_text.append("🤖 AUTO MODE\n", style="bold green")
+        mode_text.append("Fully autonomous!\n", style="dim")
+        mode_text.append("Zeus drives Hermes\n", style="dim")
+        mode_text.append("all day long", style="green")
+    
+    mode_text.append("\n\nPress 'q' to quit", style="dim")
+    
+    layout["mode"].update(Panel(mode_text, title="[bold]Mode[/]", border_style="blue"))
+    
     return layout
 
 
-def run_monitor():
-    """Run the Zeus monitor dashboard."""
+# ============================================================================
+# Main Monitor Loop
+# ============================================================================
+
+def run_monitor(mode: str = "watch", goal: str = ""):
+    """Run the Zeus monitor dashboard.
+    
+    Args:
+        mode: "watch" (read-only), "drive" (respond when Hermes stops), "auto" (fully autonomous)
+        goal: High-level goal for the session (used in drive/auto mode)
+    """
     console = Console()
     
-    console.print("\n[bold yellow]⚡ ZEUS MONITOR[/] — Watching Hermes activity")
+    mode_labels = {
+        "watch": "👁 WATCH",
+        "drive": "🚗 DRIVE", 
+        "auto": "🤖 AUTO",
+    }
+    
+    console.print(f"\n[bold yellow]⚡ ZEUS MONITOR[/] — {mode_labels.get(mode, 'WATCH')} MODE")
+    if mode == "watch":
+        console.print("[dim]Watching Hermes activity (read-only)[/]")
+    elif mode == "drive":
+        console.print("[dim]Zeus will respond when Hermes stops[/]")
+    elif mode == "auto":
+        console.print("[bold green]Zeus is driving Hermes autonomously![/]")
     console.print("[dim]Press Ctrl+C to exit[/]\n")
     
     overseer_cfg = get_overseer_config()
     last_mtime = 0
+    
+    # Initialize Zeus brain
+    zeus_brain = ZeusBrain()
+    zeus_brain._auto_mode = (mode == "auto")
+    if goal:
+        zeus_brain.set_session_goal(goal)
+    
+    # Clear any old queued messages
+    if mode in ("drive", "auto"):
+        clear_queue()
     
     try:
         with Live(console=console, refresh_per_second=0.5, screen=True) as live:
@@ -265,11 +579,18 @@ def run_monitor():
                     last_mtime = current_mtime
                     # Reload overseer config in case it changed
                     overseer_cfg = get_overseer_config()
+                    
+                    # In drive/auto mode, check if we should intervene
+                    if mode in ("drive", "auto") and zeus_brain.should_intervene(data):
+                        response = zeus_brain.evaluate_and_respond(data)
+                        if response:
+                            queue_message_for_hermes(response)
                 
-                layout = build_layout(data, overseer_cfg)
+                layout = build_layout(data, overseer_cfg, zeus_brain, mode)
                 live.update(layout)
                 
                 time.sleep(2)
+                
     except KeyboardInterrupt:
         console.print("\n[dim]Zeus Monitor stopped.[/]")
 

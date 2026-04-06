@@ -251,8 +251,10 @@ class ZeusBrain:
         self._last_turn_count = 0
         self._last_eval_time = 0
         self._consecutive_incomplete = 0
+        self._tasks_completed = 0
         self._session_goal = ""
         self._auto_mode = False
+        self._pending_tasks = []  # Queue of tasks from briefing
         
     def get_overseer(self):
         """Get or create the Zeus Overseer instance."""
@@ -324,12 +326,18 @@ class ZeusBrain:
         # Decide what to do
         if result.complete:
             self._consecutive_incomplete = 0
+            self._tasks_completed += 1
             
             if self._auto_mode:
-                # In auto mode, ask for next task or wait
-                return None  # Task complete, wait for new instructions
+                # In auto mode, generate the next task from briefing/goals
+                next_task = self._generate_next_task(data)
+                if next_task:
+                    return next_task
+                # No more tasks — truly done
+                return None
             else:
-                return None  # Let human decide next steps
+                # Drive mode: task complete, wait for human
+                return None
         
         # Task not complete
         self._consecutive_incomplete += 1
@@ -341,6 +349,40 @@ class ZeusBrain:
             return "[⚡ Zeus: You seem stuck. Try a different approach or ask for clarification.]"
         else:
             return "[⚡ Zeus: Task not complete. Please continue working.]"
+    
+    def _generate_next_task(self, data: dict) -> Optional[str]:
+        """Generate the next task for AUTO mode after current task completes.
+        
+        Uses Zeus's chat capability to determine what to work on next based on
+        the briefing file and session history.
+        """
+        overseer = self.get_overseer()
+        if not overseer or not overseer.enabled:
+            return None
+        
+        session_notes = data.get("raw_content", "")[-1500:]
+        
+        prompt = f"""The current task is COMPLETE. Based on the briefing and what's been done, what should we work on next?
+
+What has been done so far:
+{session_notes}
+
+Tasks completed this session: {self._tasks_completed}
+
+Look at the BRIEFING priorities and determine the next most important task.
+If all priorities are done, suggest maintenance, testing, or documentation tasks.
+If truly nothing left to do, respond with exactly: NOTHING_LEFT
+
+Respond with a clear, actionable task description (1-2 sentences max)."""
+
+        try:
+            response = overseer.chat(prompt, session_context=session_notes)
+            if response and "NOTHING_LEFT" not in response.upper():
+                return f"[⚡ Zeus assigns next task: {response}]"
+        except Exception:
+            pass
+        
+        return None
     
     def generate_autonomous_instruction(self, data: dict, business_context: str = "") -> Optional[str]:
         """Generate an autonomous instruction based on business context.

@@ -4,6 +4,11 @@ Uses a small local model (Gemma 4B, Phi-3, etc.) to monitor the primary agent
 and ensure tasks are completed. Runs after each turn, evaluates progress,
 and can inject nudges if the agent seems stuck or forgot something.
 
+Zeus has access to:
+- Session notes (what Hermes has done this session)
+- MEMORY.md (persistent project knowledge from Hermes)
+- Zeus briefing file (optional high-level goals and rules)
+
 Usage:
     from agent.zeus_overseer import ZeusOverseer
     
@@ -15,11 +20,63 @@ Usage:
 
 import json
 import logging
+import os
 import re
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+
+def _get_hermes_home() -> Path:
+    """Get the Hermes home directory."""
+    return Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes"))
+
+
+def _load_memory_context() -> str:
+    """Load MEMORY.md content for Zeus to use as context.
+    
+    Returns a truncated version suitable for the small model context window.
+    """
+    hermes_home = _get_hermes_home()
+    memory_file = hermes_home / "MEMORY.md"
+    
+    if not memory_file.exists():
+        return ""
+    
+    try:
+        content = memory_file.read_text(encoding="utf-8")
+        # Truncate to ~2000 chars to keep context manageable for small models
+        if len(content) > 2000:
+            # Try to keep the most recent/important parts
+            # Memory files typically have newer info at the bottom
+            content = "...(truncated)...\n" + content[-1800:]
+        return content
+    except Exception:
+        return ""
+
+
+def _load_zeus_briefing() -> str:
+    """Load optional Zeus briefing file with high-level goals and rules.
+    
+    Users can create ~/.hermes/zeus_briefing.md with business context,
+    priorities, and rules for Zeus to follow.
+    """
+    hermes_home = _get_hermes_home()
+    briefing_file = hermes_home / "zeus_briefing.md"
+    
+    if not briefing_file.exists():
+        return ""
+    
+    try:
+        content = briefing_file.read_text(encoding="utf-8")
+        # Truncate if too long
+        if len(content) > 1500:
+            content = content[:1500] + "\n...(truncated)..."
+        return content
+    except Exception:
+        return ""
 
 
 @dataclass
@@ -37,11 +94,13 @@ class ZeusOverseer:
     DEFAULT_MODEL = "gemma2:2b"  # Tiny and fast
     DEFAULT_BASE_URL = "http://localhost:11434/v1"  # Ollama default
     
-    SYSTEM_PROMPT = """You are Zeus, the divine overseer. Your ONLY job is to evaluate if a task is complete.
+    SYSTEM_PROMPT = """You are Zeus, the divine overseer. Your job is to evaluate if a task is complete and guide the agent.
 
 You will receive:
 1. TASK: What the user originally asked for
-2. SESSION NOTES: What the agent has done so far
+2. MEMORY: Persistent project knowledge (what the agent knows about the project)
+3. BRIEFING: High-level goals and rules (if provided)
+4. SESSION NOTES: What the agent has done this session
 
 Respond with ONLY valid JSON (no markdown, no explanation outside JSON):
 {
@@ -57,7 +116,9 @@ Rules:
 - nudge should be a SHORT, actionable suggestion (or null)
 - Be strict: "almost done" = not complete
 - If agent ran tests and they passed, that's good evidence of completion
-- If agent said "done" but didn't verify, that's NOT complete"""
+- If agent said "done" but didn't verify, that's NOT complete
+- Use MEMORY context to understand the project and make informed decisions
+- Follow any rules in the BRIEFING section"""
 
     def __init__(
         self,
@@ -109,16 +170,27 @@ Rules:
                 reasoning="Overseer disabled",
             )
         
-        # Build the evaluation prompt
-        user_prompt = f"""TASK: {task}
-
-SESSION NOTES (what has been done):
-{session_notes[-3000:] if len(session_notes) > 3000 else session_notes}
-
-LAST RESPONSE FROM AGENT:
-{last_response[-500:] if len(last_response) > 500 else last_response}
-
-Is this task complete? Respond with JSON only."""
+        # Load shared memory and briefing for context
+        memory_context = _load_memory_context()
+        briefing_context = _load_zeus_briefing()
+        
+        # Build the evaluation prompt with all context
+        prompt_parts = [f"TASK: {task}"]
+        
+        if memory_context:
+            prompt_parts.append(f"\nMEMORY (project knowledge):\n{memory_context}")
+        
+        if briefing_context:
+            prompt_parts.append(f"\nBRIEFING (goals & rules):\n{briefing_context}")
+        
+        prompt_parts.append(f"\nSESSION NOTES (what has been done):\n{session_notes[-2500:] if len(session_notes) > 2500 else session_notes}")
+        
+        if last_response:
+            prompt_parts.append(f"\nLAST RESPONSE FROM AGENT:\n{last_response[-400:] if len(last_response) > 400 else last_response}")
+        
+        prompt_parts.append("\nIs this task complete? Respond with JSON only.")
+        
+        user_prompt = "\n".join(prompt_parts)
 
         try:
             client = self._get_client()
@@ -200,6 +272,10 @@ Is this task complete? Respond with JSON only."""
         if not self.enabled:
             return "Zeus is currently resting on Mount Olympus. Enable overseer in config.yaml to summon him."
         
+        # Load shared memory and briefing
+        memory_context = _load_memory_context()
+        briefing_context = _load_zeus_briefing()
+        
         chat_system = """You are Zeus, the divine overseer of Hermes (an AI coding assistant).
 
 You speak with authority but also wisdom. You can:
@@ -207,11 +283,12 @@ You speak with authority but also wisdom. You can:
 2. Give advice on how to proceed with tasks
 3. Relay instructions to Hermes (the user can ask you to tell Hermes something)
 4. Provide status updates on task completion
+5. Use your knowledge of the project (from MEMORY) to make informed decisions
 
 Keep responses concise but helpful. You have a commanding yet supportive presence.
 When the user wants to relay something to Hermes, format it clearly as an instruction.
 
-If session context is provided, use it to give informed answers."""
+Use the provided context (memory, briefing, session) to give informed answers."""
 
         messages = [{"role": "system", "content": chat_system}]
         
@@ -219,10 +296,22 @@ If session context is provided, use it to give informed answers."""
         if conversation_history:
             messages.extend(conversation_history)
         
-        # Build user message with context
-        user_content = message
+        # Build user message with all context
+        context_parts = []
+        
+        if memory_context:
+            context_parts.append(f"[PROJECT MEMORY:\n{memory_context}]")
+        
+        if briefing_context:
+            context_parts.append(f"[ZEUS BRIEFING:\n{briefing_context}]")
+        
         if session_context:
-            user_content = f"[Current session context:\n{session_context[-2000:]}]\n\nUser: {message}"
+            context_parts.append(f"[SESSION CONTEXT:\n{session_context[-1500:]}]")
+        
+        if context_parts:
+            user_content = "\n\n".join(context_parts) + f"\n\nUser: {message}"
+        else:
+            user_content = message
         
         messages.append({"role": "user", "content": user_content})
         

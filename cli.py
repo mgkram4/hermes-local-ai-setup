@@ -1645,6 +1645,13 @@ class HermesCLI:
                         frags.append(("class:status-bar-strong", tok_s_label))
                     frags.append(("class:status-bar-dim", " │ "))
                     frags.append(("class:status-bar-dim", duration_label))
+                    
+                    # Show queued message count when in queue mode and agent is running
+                    queue_count = self._pending_input.qsize() if hasattr(self, '_pending_input') else 0
+                    if queue_count > 0 and self._agent_running:
+                        frags.append(("class:status-bar-dim", " │ "))
+                        frags.append(("class:status-bar-warn", f"📬 {queue_count} queued"))
+                    
                     frags.append(("class:status-bar", " "))
 
             total_width = sum(self._status_bar_display_width(text) for _, text in frags)
@@ -4451,17 +4458,48 @@ class HermesCLI:
         elif canonical == "btw":
             self._handle_btw_command(cmd_original)
         elif canonical == "queue":
-            # Extract prompt after "/queue " or "/q "
+            # /queue [prompt] — show queue status or add to queue
             parts = cmd_original.split(None, 1)
             payload = parts[1].strip() if len(parts) > 1 else ""
-            if not payload:
-                _cprint("  Usage: /queue <prompt>")
-            else:
-                self._pending_input.put(payload)
-                if self._agent_running:
-                    _cprint(f"  Queued for the next turn: {payload[:80]}{'...' if len(payload) > 80 else ''}")
+            
+            if payload == "clear":
+                # Clear the queue
+                cleared = 0
+                while not self._pending_input.empty():
+                    try:
+                        self._pending_input.get_nowait()
+                        cleared += 1
+                    except queue.Empty:
+                        break
+                _cprint(f"  {_DIM}📭 Cleared {cleared} queued message{'s' if cleared != 1 else ''}{_RST}")
+            elif payload == "mode":
+                # Show/toggle queue mode
+                current = self.busy_input_mode
+                _cprint(f"  {_DIM}Current mode:{_RST} {current}")
+                _cprint(f"  {_DIM}Set in config.yaml:{_RST} display.busy_input_mode: queue")
+            elif not payload:
+                # Show queue status
+                queue_size = self._pending_input.qsize()
+                mode_label = "queue" if self.busy_input_mode == "queue" else "interrupt"
+                if queue_size == 0:
+                    _cprint(f"  {_DIM}📭 Queue is empty (mode: {mode_label}){_RST}")
                 else:
-                    _cprint(f"  Queued: {payload[:80]}{'...' if len(payload) > 80 else ''}")
+                    _cprint(f"  {_DIM}📬 {queue_size} message{'s' if queue_size != 1 else ''} queued (mode: {mode_label}){_RST}")
+                    # Peek at queued items (without removing them)
+                    items = list(self._pending_input.queue)[:5]
+                    for i, item in enumerate(items, 1):
+                        preview = str(item)[:50] + ('...' if len(str(item)) > 50 else '')
+                        _cprint(f"    {i}. {preview}")
+                    if queue_size > 5:
+                        _cprint(f"    {_DIM}... and {queue_size - 5} more{_RST}")
+            else:
+                # Add to queue
+                self._pending_input.put(payload)
+                queue_size = self._pending_input.qsize()
+                if self._agent_running:
+                    _cprint(f"  {_DIM}📬 Queued #{queue_size}:{_RST} {payload[:60]}{'...' if len(payload) > 60 else ''}")
+                else:
+                    _cprint(f"  {_DIM}📬 Queued:{_RST} {payload[:60]}{'...' if len(payload) > 60 else ''}")
         elif canonical == "skin":
             self._handle_skin_command(cmd_original)
         elif canonical == "dashboard":
@@ -7257,8 +7295,11 @@ class HermesCLI:
                     if self.busy_input_mode == "queue":
                         # Queue for the next turn instead of interrupting
                         self._pending_input.put(payload)
+                        queue_size = self._pending_input.qsize()
                         preview = text if text else f"[{len(images)} image{'s' if len(images) != 1 else ''} attached]"
-                        _cprint(f"  Queued for the next turn: {preview[:80]}{'...' if len(preview) > 80 else ''}")
+                        preview_short = preview[:60] + ('...' if len(preview) > 60 else '')
+                        _cprint(f"  {_DIM}📬 Queued #{queue_size}:{_RST} {preview_short}")
+                        event.app.invalidate()  # Refresh status bar to show queue count
                     else:
                         self._interrupt_queue.put(payload)
                         # Debug: log to file when message enters interrupt queue
@@ -8371,6 +8412,11 @@ class HermesCLI:
                         self._spinner_text = ""
 
                         app.invalidate()  # Refresh status line
+                        
+                        # Notify if there are queued messages waiting
+                        queue_size = self._pending_input.qsize()
+                        if queue_size > 0 and self.busy_input_mode == "queue":
+                            _cprint(f"\n  {_DIM}📬 Processing {queue_size} queued message{'s' if queue_size != 1 else ''}...{_RST}")
 
                         # Continuous voice: auto-restart recording after agent responds.
                         # Dispatch to a daemon thread so play_beep (sd.wait) and

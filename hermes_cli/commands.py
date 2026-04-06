@@ -73,6 +73,8 @@ COMMAND_REGISTRY: list[CommandDef] = [
                args_hint="<question>"),
     CommandDef("queue", "View queue, add message, or clear (clear/mode/<prompt>)", "Session",
                aliases=("q",), args_hint="[clear|mode|<prompt>]"),
+    CommandDef("zeus", "Chat with Zeus overseer or relay instructions to Hermes", "Session",
+               aliases=("z",), args_hint="<message>"),
     CommandDef("status", "Show session info", "Session",
                gateway_only=True),
     CommandDef("profile", "Show active profile name and home directory", "Info"),

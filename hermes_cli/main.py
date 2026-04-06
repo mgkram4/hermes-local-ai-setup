@@ -2495,10 +2495,108 @@ def cmd_dashboard(args):
 
 
 def cmd_zeus(args):
-    """Launch the Zeus Monitor to watch active Hermes session."""
+    """Launch the Zeus Monitor or chat with Zeus."""
+    # Check for chat mode
+    if getattr(args, 'chat', False) or getattr(args, 'message', None):
+        _run_zeus_chat(args)
+        return
+    
+    # Default: launch monitor
     _require_tty("zeus")
     from hermes_cli.zeus_monitor import run_monitor
     run_monitor()
+
+
+def _run_zeus_chat(args):
+    """Interactive chat with Zeus overseer."""
+    from agent.zeus_overseer import get_overseer
+    from hermes_constants import get_hermes_home
+    
+    overseer = get_overseer()
+    if not overseer.enabled:
+        print("⚡ Zeus is not enabled. Add this to ~/.hermes/config.yaml:")
+        print()
+        print("  overseer:")
+        print("    enabled: true")
+        print("    model: gemma2:2b  # or any local model")
+        print("    base_url: http://localhost:11434/v1")
+        print()
+        return
+    
+    # Get session context if available
+    session_context = ""
+    sessions_dir = get_hermes_home() / "sessions"
+    if sessions_dir.exists():
+        notes_files = sorted(sessions_dir.glob("notes_*.txt"), key=lambda p: p.stat().st_mtime, reverse=True)
+        if notes_files:
+            try:
+                session_context = notes_files[0].read_text(encoding="utf-8")[-3000:]
+            except Exception:
+                pass
+    
+    # Single message mode
+    if getattr(args, 'message', None):
+        message = " ".join(args.message)
+        response = overseer.chat(message, session_context=session_context)
+        print(f"\n⚡ Zeus: {response}\n")
+        
+        # Check if Zeus wants to relay something to Hermes
+        if getattr(args, 'relay', False) and response:
+            relay_msg = overseer.relay_to_hermes(response)
+            print(f"📨 Relay to Hermes: {relay_msg}")
+        return
+    
+    # Interactive chat mode
+    print()
+    print("⚡ ═══════════════════════════════════════════════════════════")
+    print("   ZEUS OVERSEER — Divine Supervisor of Hermes")
+    print("   Type your message, or 'quit' to exit")
+    print("   Use 'relay: <instruction>' to send commands to Hermes")
+    print("═══════════════════════════════════════════════════════════ ⚡")
+    print()
+    
+    conversation_history = []
+    
+    while True:
+        try:
+            user_input = input("You: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\n⚡ Zeus returns to Olympus.")
+            break
+        
+        if not user_input:
+            continue
+        if user_input.lower() in ('quit', 'exit', 'q'):
+            print("⚡ Zeus returns to Olympus.")
+            break
+        
+        # Check for relay command
+        if user_input.lower().startswith('relay:'):
+            instruction = user_input[6:].strip()
+            if instruction:
+                relay_msg = overseer.relay_to_hermes(instruction)
+                print(f"\n📨 Queued for Hermes: {relay_msg}")
+                print("   (Copy this into your Hermes session or use /zeus relay in chat)\n")
+            else:
+                print("   Usage: relay: <instruction for Hermes>")
+            continue
+        
+        # Chat with Zeus
+        response = overseer.chat(
+            user_input,
+            session_context=session_context,
+            conversation_history=conversation_history,
+        )
+        
+        # Update history
+        conversation_history.append({"role": "user", "content": user_input})
+        conversation_history.append({"role": "assistant", "content": response})
+        
+        # Keep history manageable
+        if len(conversation_history) > 20:
+            conversation_history = conversation_history[-20:]
+        
+        print(f"\n⚡ Zeus: {response}\n")
 
 
 def cmd_version(args):
@@ -5498,12 +5596,27 @@ For more help on a command:
     dashboard_parser.set_defaults(func=cmd_dashboard)
 
     # =========================================================================
-    # zeus command — monitor active Hermes session
+    # zeus command — monitor active Hermes session or chat with Zeus
     # =========================================================================
     zeus_parser = subparsers.add_parser(
         "zeus",
-        help="Monitor active Hermes session (run in separate terminal)",
-        description="Zeus Monitor — Watch Hermes activity in real-time"
+        help="Monitor Hermes session or chat with Zeus overseer",
+        description="Zeus — Monitor Hermes activity or chat with the divine overseer"
+    )
+    zeus_parser.add_argument(
+        "--chat", "-c",
+        action="store_true",
+        help="Start interactive chat with Zeus"
+    )
+    zeus_parser.add_argument(
+        "--relay", "-r",
+        action="store_true",
+        help="Relay Zeus's response as an instruction for Hermes"
+    )
+    zeus_parser.add_argument(
+        "message",
+        nargs="*",
+        help="Send a single message to Zeus (implies --chat)"
     )
     zeus_parser.set_defaults(func=cmd_zeus)
 

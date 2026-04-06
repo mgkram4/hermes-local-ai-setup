@@ -4500,6 +4500,8 @@ class HermesCLI:
                     _cprint(f"  {_DIM}📬 Queued #{queue_size}:{_RST} {payload[:60]}{'...' if len(payload) > 60 else ''}")
                 else:
                     _cprint(f"  {_DIM}📬 Queued:{_RST} {payload[:60]}{'...' if len(payload) > 60 else ''}")
+        elif canonical == "zeus":
+            self._handle_zeus_command(cmd_original)
         elif canonical == "skin":
             self._handle_skin_command(cmd_original)
         elif canonical == "dashboard":
@@ -5166,6 +5168,97 @@ class HermesCLI:
             padding=(1, 2),
         ))
         console.print()
+
+    def _handle_zeus_command(self, cmd: str):
+        """Handle /zeus <message> — chat with Zeus or relay instructions to Hermes."""
+        parts = cmd.split(None, 1)
+        message = parts[1].strip() if len(parts) > 1 else ""
+        
+        try:
+            from agent.zeus_overseer import get_overseer
+            overseer = get_overseer()
+        except Exception as e:
+            _cprint(f"  {_DIM}⚡ Zeus unavailable: {e}{_RST}")
+            return
+        
+        if not overseer.enabled:
+            _cprint(f"  {_DIM}⚡ Zeus is not enabled. Set overseer.enabled: true in config.yaml{_RST}")
+            return
+        
+        if not message:
+            # Show Zeus status
+            _cprint(f"  {_DIM}⚡ Zeus Overseer — {overseer.model}{_RST}")
+            _cprint(f"  {_DIM}   Usage: /zeus <message>        — Chat with Zeus{_RST}")
+            _cprint(f"  {_DIM}          /zeus relay <msg>     — Tell Zeus to instruct Hermes{_RST}")
+            _cprint(f"  {_DIM}          /zeus status          — Show current task status{_RST}")
+            return
+        
+        # Get session context from agent's session notes
+        session_context = ""
+        if self.agent and hasattr(self.agent, '_session_notes'):
+            notes = getattr(self.agent, '_session_notes', None)
+            if notes and hasattr(notes, 'notes_file') and notes.notes_file.exists():
+                try:
+                    session_context = notes.notes_file.read_text(encoding="utf-8")[-2000:]
+                except Exception:
+                    pass
+        
+        # Fallback: try to find the latest session notes file
+        if not session_context:
+            try:
+                from hermes_constants import get_hermes_home
+                sessions_dir = get_hermes_home() / "sessions"
+                if sessions_dir.exists():
+                    notes_files = sorted(sessions_dir.glob("notes_*.txt"), key=lambda p: p.stat().st_mtime, reverse=True)
+                    if notes_files:
+                        session_context = notes_files[0].read_text(encoding="utf-8")[-2000:]
+            except Exception:
+                pass
+        
+        # Handle subcommands
+        if message.lower() == "status":
+            # Quick status check
+            if not session_context:
+                _cprint(f"  {_DIM}⚡ No active session to evaluate{_RST}")
+                return
+            
+            # Get last user message for context
+            last_task = "Current session"
+            if self.conversation_history:
+                for msg in reversed(self.conversation_history):
+                    if msg.get("role") == "user":
+                        content = msg.get("content", "")
+                        if isinstance(content, str):
+                            last_task = content[:100]
+                        break
+            
+            _cprint(f"  {_DIM}⚡ Zeus is evaluating...{_RST}")
+            result = overseer.evaluate(
+                task=last_task,
+                session_notes=session_context,
+                last_response="",
+            )
+            status = "✓ COMPLETE" if result.complete else "⚡ IN PROGRESS"
+            _cprint(f"  {_DIM}⚡ Status: {status} ({result.confidence:.0%} confident){_RST}")
+            _cprint(f"  {_DIM}   {result.reasoning}{_RST}")
+            if result.nudge:
+                _cprint(f"  {_DIM}   Suggestion: {result.nudge}{_RST}")
+            return
+        
+        if message.lower().startswith("relay "):
+            instruction = message[6:].strip()
+            if instruction:
+                relay_msg = f"[⚡ Zeus commands: {instruction}]"
+                self._pending_input.put(relay_msg)
+                _cprint(f"  {_DIM}⚡ Zeus's instruction queued for Hermes{_RST}")
+            else:
+                _cprint(f"  {_DIM}   Usage: /zeus relay <instruction for Hermes>{_RST}")
+            return
+        
+        # Regular chat with Zeus
+        _cprint(f"  {_DIM}⚡ Consulting Zeus...{_RST}")
+        response = overseer.chat(message, session_context=session_context)
+        _cprint(f"\n  ⚡ Zeus: {response}\n")
 
     def _handle_skin_command(self, cmd: str):
         """Handle /skin [name] — show or change the display skin."""

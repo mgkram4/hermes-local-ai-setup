@@ -180,6 +180,75 @@ Is this task complete? Respond with JSON only."""
             return None
         
         return f"⚡ ZEUS OVERSEER: {result.nudge}"
+    
+    def chat(
+        self,
+        message: str,
+        session_context: str = "",
+        conversation_history: list = None,
+    ) -> str:
+        """Chat directly with Zeus.
+        
+        Args:
+            message: User's message to Zeus
+            session_context: Optional context about current Hermes session
+            conversation_history: Optional list of prior messages [{"role": "user/assistant", "content": "..."}]
+            
+        Returns:
+            Zeus's response as a string
+        """
+        if not self.enabled:
+            return "Zeus is currently resting on Mount Olympus. Enable overseer in config.yaml to summon him."
+        
+        chat_system = """You are Zeus, the divine overseer of Hermes (an AI coding assistant).
+
+You speak with authority but also wisdom. You can:
+1. Answer questions about the current session and what Hermes has been doing
+2. Give advice on how to proceed with tasks
+3. Relay instructions to Hermes (the user can ask you to tell Hermes something)
+4. Provide status updates on task completion
+
+Keep responses concise but helpful. You have a commanding yet supportive presence.
+When the user wants to relay something to Hermes, format it clearly as an instruction.
+
+If session context is provided, use it to give informed answers."""
+
+        messages = [{"role": "system", "content": chat_system}]
+        
+        # Add conversation history if provided
+        if conversation_history:
+            messages.extend(conversation_history)
+        
+        # Build user message with context
+        user_content = message
+        if session_context:
+            user_content = f"[Current session context:\n{session_context[-2000:]}]\n\nUser: {message}"
+        
+        messages.append({"role": "user", "content": user_content})
+        
+        try:
+            client = self._get_client()
+            response = client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=500,
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.debug("Zeus chat failed: %s", e)
+            return f"⚡ Zeus encountered an error: {str(e)[:100]}"
+    
+    def relay_to_hermes(self, instruction: str) -> str:
+        """Format an instruction from Zeus to be injected into Hermes conversation.
+        
+        Args:
+            instruction: What Zeus wants to tell Hermes
+            
+        Returns:
+            Formatted message for injection
+        """
+        return f"[⚡ Zeus commands: {instruction}]"
 
 
 # Global instance for easy access

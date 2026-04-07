@@ -558,7 +558,7 @@ def build_layout(data: dict, overseer_cfg: dict, zeus_brain: ZeusBrain, mode: st
     
     layout["activity"].update(Panel(activity_text, title="[bold green]Activity[/]", border_style="green"))
     
-    # Overseer panel
+    # Overseer panel — show Zeus's current thinking
     overseer_content = Text()
     
     enabled = overseer_cfg.get("enabled", False)
@@ -571,11 +571,37 @@ def build_layout(data: dict, overseer_cfg: dict, zeus_brain: ZeusBrain, mode: st
         overseer_content.append("○ DISABLED\n", style="bold red")
         overseer_content.append("Enable in config.yaml\n\n", style="dim")
     
-    # Show overseer evaluations
+    # Show Zeus's current assessment
+    if mode in ("drive", "auto") and turns:
+        overseer_content.append("Current Status:\n", style="bold white")
+        
+        # Progress indicator
+        no_progress = zeus_brain._consecutive_no_progress
+        if no_progress == 0:
+            overseer_content.append("  ✓ Hermes making progress\n", style="green")
+        elif no_progress == 1:
+            overseer_content.append("  ◐ Watching... (1 turn)\n", style="yellow")
+        elif no_progress < 4:
+            overseer_content.append(f"  ◑ Monitoring ({no_progress} turns)\n", style="yellow")
+        else:
+            overseer_content.append(f"  ⚠ May be stuck ({no_progress} turns)\n", style="red")
+        
+        # Tasks completed
+        if zeus_brain._tasks_completed > 0:
+            overseer_content.append(f"  📋 Tasks done: {zeus_brain._tasks_completed}\n", style="cyan")
+        
+        # Last nudge info
+        if zeus_brain._last_nudge_turn > 0:
+            turns_ago = len(turns) - zeus_brain._last_nudge_turn
+            overseer_content.append(f"  💬 Last nudge: {turns_ago} turns ago\n", style="dim")
+        
+        overseer_content.append("\n", style="dim")
+    
+    # Show overseer evaluations from session notes
     evals = data.get("overseer_evals", [])
     if evals:
-        overseer_content.append("Recent Evaluations:\n", style="bold white")
-        for ev in evals[-4:]:
+        overseer_content.append("Evaluations:\n", style="bold white")
+        for ev in evals[-3:]:
             msg = ev.get("message", "")
             ts = ev.get("timestamp", "")
             
@@ -585,8 +611,11 @@ def build_layout(data: dict, overseer_cfg: dict, zeus_brain: ZeusBrain, mode: st
                 overseer_content.append(f"  ⚡ ", style="yellow")
             
             overseer_content.append(f"{ts} ", style="dim")
-            msg_short = msg[:35] + "..." if len(msg) > 35 else msg
+            msg_short = msg[:30] + "..." if len(msg) > 30 else msg
             overseer_content.append(f"{msg_short}\n", style="white")
+    elif mode in ("drive", "auto"):
+        overseer_content.append("Watching silently...\n", style="dim")
+        overseer_content.append("Will nudge if stuck.\n", style="dim")
     else:
         overseer_content.append("No evaluations yet.\n", style="dim")
     
@@ -601,20 +630,21 @@ def build_layout(data: dict, overseer_cfg: dict, zeus_brain: ZeusBrain, mode: st
     if mode == "watch":
         mode_text.append("👁 WATCH MODE\n", style="bold cyan")
         mode_text.append("Read-only monitoring\n", style="dim")
-        mode_text.append("Use --drive to enable\n", style="dim")
-        mode_text.append("Zeus interventions", style="dim")
+        mode_text.append("Use --drive or --auto\n", style="dim")
+        mode_text.append("to enable nudges", style="dim")
     elif mode == "drive":
         mode_text.append("🚗 DRIVE MODE\n", style="bold yellow")
-        mode_text.append("Zeus responds when\n", style="dim")
-        mode_text.append("Hermes stops working\n", style="dim")
-        mode_text.append(f"Interventions: {zeus_brain._consecutive_incomplete}", style="yellow")
+        mode_text.append("Nudges when stuck\n", style="dim")
+        mode_text.append("Stops when complete\n", style="dim")
+        nudges = zeus_brain._last_nudge_turn
+        mode_text.append(f"Nudges sent: {nudges}", style="yellow")
     elif mode == "auto":
         mode_text.append("🤖 AUTO MODE\n", style="bold green")
-        mode_text.append("Fully autonomous!\n", style="dim")
-        mode_text.append("Zeus drives Hermes\n", style="dim")
-        mode_text.append("all day long", style="green")
+        mode_text.append("Nudges when stuck\n", style="dim")
+        mode_text.append("Assigns next task\n", style="dim")
+        mode_text.append("when complete", style="green")
     
-    mode_text.append("\n\nPress 'q' to quit", style="dim")
+    mode_text.append("\n\nCtrl+C to quit", style="dim")
     
     layout["mode"].update(Panel(mode_text, title="[bold]Mode[/]", border_style="blue"))
     

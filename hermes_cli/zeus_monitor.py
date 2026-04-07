@@ -244,17 +244,29 @@ def get_overseer_config() -> dict:
 # ============================================================================
 
 class ZeusBrain:
-    """Zeus's decision-making engine for autonomous operation."""
+    """Zeus's decision-making engine for autonomous operation.
+    
+    Philosophy: Zeus watches silently and only intervenes when necessary.
+    - If Hermes is making progress → stay quiet
+    - If Hermes seems stuck (same errors, no progress) → nudge
+    - If Hermes finished but task incomplete → nudge
+    - If task complete → assign next task (auto mode) or stay quiet (drive mode)
+    """
     
     def __init__(self):
         self._overseer = None
         self._last_turn_count = 0
         self._last_eval_time = 0
         self._consecutive_incomplete = 0
+        self._consecutive_no_progress = 0
         self._tasks_completed = 0
         self._session_goal = ""
         self._auto_mode = False
         self._pending_tasks = []  # Queue of tasks from briefing
+        self._last_tool_count = 0
+        self._last_error_count = 0
+        self._last_nudge_turn = 0  # Don't nudge too frequently
+        self._min_turns_between_nudges = 3  # Wait at least 3 turns before nudging again
         
     def get_overseer(self):
         """Get or create the Zeus Overseer instance."""
@@ -281,7 +293,12 @@ class ZeusBrain:
         return False
     
     def evaluate_and_respond(self, data: dict) -> Optional[str]:
-        """Evaluate the session and generate a response if needed.
+        """Evaluate the session and decide if intervention is needed.
+        
+        Zeus watches silently most of the time. Only intervenes when:
+        1. Task is complete → assign next task (auto mode only)
+        2. Hermes seems stuck (errors, no progress for multiple turns)
+        3. Hermes stopped but task isn't done (and enough turns have passed)
         
         Returns:
             A message to send to Hermes, or None if no action needed
@@ -294,14 +311,43 @@ class ZeusBrain:
         if not turns:
             return None
         
+        current_turn = len(turns)
+        
+        # Don't nudge too frequently — let Hermes work
+        turns_since_last_nudge = current_turn - self._last_nudge_turn
+        if turns_since_last_nudge < self._min_turns_between_nudges and self._last_nudge_turn > 0:
+            return None  # Too soon, stay quiet
+        
         # Get the last turn info
         last_turn = turns[-1]
         last_response = last_turn.get("response", "")
+        tools_used = len(last_turn.get("tools", []))
         
-        # Get session context
-        session_notes = data.get("raw_content", "")[-3000:]
+        # Count errors in session notes
+        session_notes = data.get("raw_content", "")
+        error_count = session_notes.count("⚠") + session_notes.count("BLOCKED") + session_notes.count("failed")
         
-        # Determine the task (use session goal or last user message)
+        # Check if Hermes is making progress
+        is_making_progress = tools_used > 0 or len(last_response) > 100
+        errors_increasing = error_count > self._last_error_count + 2
+        
+        self._last_error_count = error_count
+        
+        # If making progress and no major errors, stay quiet
+        if is_making_progress and not errors_increasing:
+            self._consecutive_no_progress = 0
+            # Only evaluate completion, don't nudge if incomplete
+            # Let Hermes keep working
+            return None
+        
+        # Not making progress — track it
+        self._consecutive_no_progress += 1
+        
+        # Only intervene if stuck for multiple turns
+        if self._consecutive_no_progress < 2:
+            return None  # Give Hermes more time
+        
+        # Hermes seems stuck — evaluate and potentially nudge
         task = self._session_goal
         if not task:
             for turn in reversed(turns):
@@ -317,38 +363,44 @@ class ZeusBrain:
         try:
             result = overseer.evaluate(
                 task=task,
-                session_notes=session_notes,
+                session_notes=session_notes[-3000:],
                 last_response=last_response,
             )
         except Exception as e:
-            return f"[Zeus: Evaluation error - {str(e)[:50]}]"
+            return None  # Evaluation failed, stay quiet
         
-        # Decide what to do
+        # Task complete?
         if result.complete:
             self._consecutive_incomplete = 0
+            self._consecutive_no_progress = 0
             self._tasks_completed += 1
             
             if self._auto_mode:
                 # In auto mode, generate the next task from briefing/goals
                 next_task = self._generate_next_task(data)
                 if next_task:
+                    self._last_nudge_turn = current_turn
                     return next_task
-                # No more tasks — truly done
-                return None
-            else:
-                # Drive mode: task complete, wait for human
-                return None
+            # Task complete, stay quiet
+            return None
         
-        # Task not complete
+        # Task not complete and Hermes seems stuck
         self._consecutive_incomplete += 1
         
-        # Generate follow-up instruction
-        if result.nudge:
-            return f"[⚡ Zeus says: {result.nudge}] Please continue."
-        elif self._consecutive_incomplete > 3:
-            return "[⚡ Zeus: You seem stuck. Try a different approach or ask for clarification.]"
-        else:
-            return "[⚡ Zeus: Task not complete. Please continue working.]"
+        # Only nudge if we have something useful to say
+        if result.nudge and result.confidence > 0.5:
+            self._last_nudge_turn = current_turn
+            self._consecutive_no_progress = 0
+            return f"[⚡ Zeus: {result.nudge}]"
+        
+        # Stuck for a while with no good suggestion
+        if self._consecutive_no_progress >= 4:
+            self._last_nudge_turn = current_turn
+            self._consecutive_no_progress = 0
+            return "[⚡ Zeus: You seem stuck. Try a different approach, check for errors, or simplify the task.]"
+        
+        # No intervention needed
+        return None
     
     def _generate_next_task(self, data: dict) -> Optional[str]:
         """Generate the next task for AUTO mode after current task completes.

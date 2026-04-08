@@ -6031,6 +6031,7 @@ class AIAgent:
                     "role": "tool",
                     "content": f"[Tool execution cancelled — {tc.function.name} was skipped due to user interrupt]",
                     "tool_call_id": tc.id,
+                    "tool_name": tc.function.name,
                 })
             return
 
@@ -6192,11 +6193,11 @@ class AIAgent:
             # Save oversized results to file instead of destructive truncation
             function_result = _save_oversized_tool_result(name, function_result)
 
-            # Append tool result message in order
             tool_msg = {
                 "role": "tool",
                 "content": function_result,
                 "tool_call_id": tc.id,
+                "tool_name": name,
             }
             messages.append(tool_msg)
 
@@ -6234,6 +6235,7 @@ class AIAgent:
                         "role": "tool",
                         "content": f"[Tool execution cancelled — {skipped_name} was skipped due to user interrupt]",
                         "tool_call_id": skipped_tc.id,
+                        "tool_name": skipped_name,
                     }
                     messages.append(skip_msg)
                 break
@@ -6478,7 +6480,8 @@ class AIAgent:
             tool_msg = {
                 "role": "tool",
                 "content": function_result,
-                "tool_call_id": tool_call.id
+                "tool_call_id": tool_call.id,
+                "tool_name": function_name,
             }
             messages.append(tool_msg)
 
@@ -6498,7 +6501,8 @@ class AIAgent:
                     skip_msg = {
                         "role": "tool",
                         "content": f"[Tool execution skipped — {skipped_name} was not started. User sent a new message]",
-                        "tool_call_id": skipped_tc.id
+                        "tool_call_id": skipped_tc.id,
+                        "tool_name": skipped_name,
                     }
                     messages.append(skip_msg)
                 break
@@ -8489,6 +8493,7 @@ class AIAgent:
                             messages.append({
                                 "role": "tool",
                                 "tool_call_id": tc.id,
+                                "tool_name": tc.function.name,
                                 "content": content,
                             })
                         continue
@@ -8552,6 +8557,7 @@ class AIAgent:
                                 messages.append({
                                     "role": "tool",
                                     "tool_call_id": tc.id,
+                                    "tool_name": tc.function.name,
                                     "content": tool_result,
                                 })
                             continue
@@ -8808,6 +8814,7 @@ class AIAgent:
                                 err_msg = {
                                     "role": "tool",
                                     "tool_call_id": tc["id"],
+                                    "tool_name": tc.get("function", {}).get("name"),
                                     "content": f"Error executing tool: {error_msg}",
                                 }
                                 messages.append(err_msg)

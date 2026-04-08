@@ -1,25 +1,21 @@
-"""View 7: Model Switchboard -- Epic Hermes art with divine model switching.
+"""View 7: Model Switchboard -- Uses the native hermes model pipeline.
 
 Features:
 - Epic Hermes hero art (messenger god - model routing)
 - Hermes braille pixel art portrait
 - Active model panel with divine styling
-- LM Studio status panel
-- Configured providers list
-- Model switch input with context length
+- Authenticated providers with curated model lists
+- Model switch input supporting aliases and --provider flag
+- Real credential resolution and models.dev catalog lookup
 """
 
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical, ScrollableContainer
+from textual.containers import Horizontal, ScrollableContainer
 from textual.reactive import reactive
 from textual.widgets import Static, Input
 from textual import work
 import random
 
-
-# =============================================================================
-# EPIC MODEL SWITCH HERO ART — Hermes' Divine Caduceus
-# =============================================================================
 
 SWITCH_HERO_FRAME_1 = """\
 [dim #0A0A12]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/]
@@ -33,7 +29,7 @@ SWITCH_HERO_FRAME_1 = """\
 [dim #1A1A38]░░[/][#2A2A50]║[/]      [#FFEC8B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [#FFD700]⚕[/] [dim #555577]HERMES[/] — Divine Messenger     [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#2A2A50]║[/]      [#FFEC8B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [dim #00D4FF]route · switch · connect[/]          [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#2A2A50]║[/]      [#C9A227]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]                                       [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
-[dim #1A1A38]░░[/][#2A2A50]║[/]      [#555577]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [dim #555577]LM Studio • OpenRouter • Custom[/]   [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
+[dim #1A1A38]░░[/][#2A2A50]║[/]      [#555577]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]║[/]  [dim #555577]Aliases • Providers • models.dev[/]  [bold #FFD700]║[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#2A2A50]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]       [bold #FFD700]╚═══════════════════════════════════════╝[/]      [#2A2A50]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#2A2A50]║[/]      [dim #3A3A6A]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠿⠿⠿⠿⠿⠟⠛⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]                                                              [#2A2A50]║[/][dim #1A1A38]░░[/]
 [dim #1A1A38]░░[/][#2A2A50]║[/]                                                                                                              [#2A2A50]║[/][dim #1A1A38]░░[/]
@@ -41,82 +37,144 @@ SWITCH_HERO_FRAME_1 = """\
 [dim #0A0A12]░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░[/]\
 """
 
+MAX_MODELS_PER_PROVIDER = 6
+ALIAS_DISPLAY_COLS = 6
 
-# =============================================================================
-# WIDGETS
-# =============================================================================
 
 class SwitchHero(Static):
     """Model switch hero art widget."""
-    
+
     def render(self) -> str:
         return SWITCH_HERO_FRAME_1
 
 
 class ActiveModelPanel(Static):
     """Shows the current active model config with divine styling."""
-    
+
     info: reactive[dict] = reactive(dict, always_update=True)
 
     def render(self) -> str:
         header = "[bold #FFD700]⚕ ACTIVE MODEL[/]\n\n"
-        
+
         if not self.info:
             return header + "[dim #555577]Loading...[/]"
-        
+
         model = self.info.get("model", "?")
         provider = self.info.get("provider", "?")
+        provider_label = self.info.get("provider_label", provider)
         base_url = self.info.get("base_url", "")
         ctx = self.info.get("context_length")
-        
-        # Provider styling
+
         if "openrouter" in provider.lower():
             provider_icon = "🌐"
             provider_color = "#00D4FF"
-        elif "lmstudio" in provider.lower() or "custom:" in provider.lower():
+        elif "custom" in provider.lower() or "local" in provider.lower():
             provider_icon = "🖥"
             provider_color = "#00FF99"
         elif "ollama" in provider.lower():
             provider_icon = "🦙"
             provider_color = "#FF8C00"
+        elif "anthropic" in provider.lower():
+            provider_icon = "🔮"
+            provider_color = "#D4A574"
+        elif "openai" in provider.lower() or "codex" in provider.lower():
+            provider_icon = "⚡"
+            provider_color = "#74AA9C"
+        elif "google" in provider.lower() or "gemini" in provider.lower():
+            provider_icon = "💎"
+            provider_color = "#4285F4"
         else:
             provider_icon = "⚡"
             provider_color = "#FFD700"
-        
+
         ctx_line = ""
         if ctx:
             ctx_line = f"\n  [dim #555577]Context: {ctx:,} tokens ({ctx // 1024}K)[/]"
-        
+
+        url_line = ""
+        if base_url:
+            url_line = f"\n  [dim #555577]{base_url}[/]"
+
         return (
             header
             + f"  [{provider_color}]{provider_icon}[/] [bold #00FF99]{model}[/]\n"
-            + f"  [dim #00A8CC]{provider}[/]\n"
-            + f"  [dim #555577]{base_url}[/]"
+            + f"  [dim #00A8CC]{provider_label}[/]"
+            + url_line
             + ctx_line
         )
 
 
-class LMStudioPanel(Static):
-    """Shows LM Studio connection status and loaded models."""
-    
-    content: reactive[str] = reactive("", always_update=True)
-
-    def render(self) -> str:
-        return self.content or "[dim #555577]Checking LM Studio...[/]"
-
-
 class ProvidersPanel(Static):
-    """Shows all configured providers and their models."""
-    
-    content: reactive[str] = reactive("", always_update=True)
+    """Shows authenticated providers with their curated model lists."""
+
+    providers_data: reactive[list] = reactive(list, always_update=True)
 
     def render(self) -> str:
-        return self.content or "[dim #555577]Loading providers...[/]"
+        header = "[bold #FFD700]ΓΝΩΣΤΟΙ — AUTHENTICATED PROVIDERS[/]\n\n"
+
+        if not self.providers_data:
+            return header + "[dim #555577]Scanning for providers...[/]"
+
+        lines = []
+        for p in self.providers_data:
+            slug = p.get("slug", "?")
+            name = p.get("name", slug)
+            is_current = p.get("is_current", False)
+            is_user = p.get("is_user_defined", False)
+            models = p.get("models", [])
+            total = p.get("total_models", 0)
+
+            badge = "[bold #00FF99]◆ ACTIVE[/]" if is_current else "[dim #555577]◇[/]"
+            user_tag = "  [dim #C9A227](user)[/]" if is_user else ""
+            lines.append(
+                f"  {badge}  [bold #FFD700]{name}[/]{user_tag}  "
+                f"[dim #555577]--provider {slug}[/]"
+            )
+
+            if models:
+                shown = models[:MAX_MODELS_PER_PROVIDER]
+                model_parts = [f"[#E0F7FF]{m}[/]" for m in shown]
+                extra = ""
+                if total > len(shown):
+                    extra = f"  [dim #555577]+{total - len(shown)} more[/]"
+                lines.append(f"      {', '.join(model_parts)}{extra}")
+            elif p.get("api_url"):
+                lines.append(
+                    f"      [dim #555577]{p['api_url']}[/]"
+                )
+
+            lines.append("")
+
+        return header + "\n".join(lines)
+
+
+class AliasesPanel(Static):
+    """Shows available model aliases."""
+
+    aliases_data: reactive[list] = reactive(list, always_update=True)
+
+    def render(self) -> str:
+        header = "[bold #FFD700]⚡ ALIASES — Quick Switch[/]\n\n"
+
+        if not self.aliases_data:
+            return header + "[dim #555577]No aliases loaded[/]"
+
+        rows = []
+        row: list[str] = []
+        for alias in self.aliases_data:
+            row.append(f"[#00D4FF]{alias}[/]")
+            if len(row) >= ALIAS_DISPLAY_COLS:
+                rows.append("  " + "  ".join(f"{a:<12}" for a in row))
+                row = []
+        if row:
+            rows.append("  " + "  ".join(f"{a:<12}" for a in row))
+
+        return header + "\n".join(rows)
 
 
 class StatusMessage(Static):
     """Status message display."""
-    
+
     message: reactive[str] = reactive("")
 
     def render(self) -> str:
@@ -125,43 +183,40 @@ class StatusMessage(Static):
 
 class HermesPortrait(Static):
     """Hermes pixel art portrait with lore and abilities."""
-    
+
     god_data: reactive[dict] = reactive(dict, always_update=True)
-    
+
     def render(self) -> str:
         if not self.god_data:
             return "[dim #555577]Summoning the Divine Messenger...[/]"
-        
+
         pixel_art = self.god_data.get("pixel_art", "")
         abilities = self.god_data.get("abilities", [])
         quotes = self.god_data.get("quotes", [])
-        
+
         content = ""
         if pixel_art:
             content += pixel_art + "\n"
-        
+
         if abilities:
             content += "\n[bold #FFD700]DIVINE POWERS:[/]\n"
             for ability in abilities[:3]:
                 content += f"  [dim #FFEC8B]{ability}[/]\n"
-        
+
         if quotes:
             quote = random.choice(quotes)
             content += f"\n[italic dim #555577]\"{quote}\"[/]"
-        
+
         return content
 
 
 class ModelSwitchView(ScrollableContainer):
-    """Model Switchboard -- Divine model routing with Hermes hero art.
-    
-    Features:
-    - Epic Hermes hero art
-    - Hermes braille pixel art portrait
-    - Active model panel
-    - LM Studio status
-    - Configured providers list
-    - Model switch input
+    """Model Switchboard -- Uses the native hermes model pipeline.
+
+    Supports the same syntax as ``/model`` in the CLI:
+    - Model name or alias (e.g. ``sonnet``, ``gpt5``, ``deepseek``)
+    - ``--provider <slug>`` flag
+    - ``--global`` flag to persist to config.yaml
     """
 
     def compose(self) -> ComposeResult:
@@ -169,180 +224,211 @@ class ModelSwitchView(ScrollableContainer):
         with Horizontal(classes="bento-row"):
             yield HermesPortrait(id="hermes-portrait", classes="divine-panel-gold")
             yield ActiveModelPanel(id="active-model", classes="divine-panel-gold")
-            yield LMStudioPanel(id="lms-panel", classes="divine-panel-gold")
         yield ProvidersPanel(id="providers-panel", classes="divine-panel")
+        yield AliasesPanel(id="aliases-panel", classes="divine-panel")
         yield Static(
             "[bold #FFD700]⚕ SWITCH MODEL[/]  "
-            "[dim #00A8CC]Enter model name as shown in LM Studio / config. "
-            "Context = max tokens (optional: leave blank for default 32K)[/]",
+            "[dim #00A8CC]Same syntax as /model — "
+            "enter a name, alias, or use --provider and --global flags[/]",
             classes="bento-gold",
         )
         with Horizontal(id="switch-row", classes="divine-panel"):
             yield Input(
-                placeholder="Model id (e.g. gemma-4-e4b-it)",
+                placeholder="e.g. sonnet, gpt5, deepseek, my-model --provider openrouter --global",
                 id="switch-input-model",
-            )
-            yield Input(
-                placeholder="Context (e.g. 131072 or 128k)",
-                id="switch-input-context",
             )
         yield StatusMessage(id="switch-status")
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        if event.input.id not in ("switch-input-model", "switch-input-context"):
+        if event.input.id != "switch-input-model":
             return
-        
-        model_inp = self.query_one("#switch-input-model", Input)
-        ctx_inp = self.query_one("#switch-input-context", Input)
-        model_id = model_inp.value.strip()
-        
-        if not model_id:
-            self._set_status("[bold #FF4444]✗ Enter a model name[/]")
+
+        raw = self.query_one("#switch-input-model", Input).value.strip()
+        if not raw:
+            self._set_status("[bold #FF4444]✗ Enter a model name or alias[/]")
             return
-        
-        from hermes_cli.dashboard.data import (
-            get_custom_providers,
-            resolve_dashboard_context_input,
-        )
-        
-        providers = get_custom_providers()
-        lms_providers = [
-            p for p in providers
-            if "localhost:1234" in p.get("base_url", "") or "lmstudio" in p.get("name", "").lower()
-        ]
-        
-        if lms_providers:
-            target = lms_providers[0]["name"]
-        elif providers:
-            target = providers[0]["name"]
-        else:
-            self._set_status(
-                "[bold #FF4444]✗ No custom providers configured in config.yaml[/]",
-            )
-            return
-        
-        tokens, err = resolve_dashboard_context_input(
-            ctx_inp.value, target, model_id,
-        )
-        
-        if err:
-            self._set_status(f"[bold #FF4444]✗ {err}[/]")
-            return
-        
-        self._do_switch(model_id, tokens, target)
+
+        self._set_status("[dim #00A8CC]Resolving model...[/]")
+        self._do_switch(raw)
 
     @work(thread=True)
-    def _do_switch(self, model_id: str, context_length: int, target: str) -> None:
-        from hermes_cli.dashboard.data import (
-            switch_active_model, ensure_provider_has_model,
+    def _do_switch(self, raw_input: str) -> None:
+        from hermes_cli.model_switch import switch_model, parse_model_flags
+        from hermes_cli.providers import get_label
+
+        model_input, explicit_provider, is_global = parse_model_flags(raw_input)
+
+        if not model_input and not explicit_provider:
+            self.app.call_from_thread(
+                self._set_status,
+                "[bold #FF4444]✗ Enter a model name or alias[/]",
+            )
+            return
+
+        current = _get_current_model_state()
+
+        result = switch_model(
+            raw_input=model_input,
+            current_provider=current["provider"],
+            current_model=current["model"],
+            current_base_url=current["base_url"],
+            current_api_key=current["api_key"],
+            is_global=is_global,
+            explicit_provider=explicit_provider,
+            user_providers=current.get("user_providers"),
         )
 
-        ensure_provider_has_model(target, model_id, context_length)
-        ok = switch_active_model(model_id, target)
-        
-        if ok:
-            msg = (
-                f"[bold #00FF99]✓ Switched to {model_id}[/]  "
-                f"[dim #00A8CC]({context_length:,} ctx) via {target} "
-                f"— restart hermes to use[/]"
+        if not result.success:
+            self.app.call_from_thread(
+                self._set_status,
+                f"[bold #FF4444]✗ {result.error_message}[/]",
             )
-        else:
-            msg = f"[bold #FF4444]✗ Failed to switch to {model_id}[/]"
-        
+            return
+
+        if is_global:
+            _persist_model_switch(result)
+
+        alias_note = ""
+        if result.resolved_via_alias:
+            alias_note = f"  [dim #C9A227](alias: {result.resolved_via_alias})[/]"
+
+        global_note = ""
+        if is_global:
+            global_note = "  [dim #00FF99]saved to config.yaml[/]"
+
+        provider_note = ""
+        if result.provider_changed:
+            label = result.provider_label or result.target_provider
+            provider_note = f"  [dim #00A8CC]provider: {label}[/]"
+
+        warn = ""
+        if result.warning_message:
+            warn = f"\n[dim #FFD700]⚠ {result.warning_message}[/]"
+
+        msg = (
+            f"[bold #00FF99]✓ Switched to {result.new_model}[/]"
+            f"{alias_note}{provider_note}{global_note}{warn}"
+        )
+
         self.app.call_from_thread(self._set_status, msg)
         self.app.call_from_thread(self.load_data)
 
     def _set_status(self, msg: str) -> None:
-        self.query_one("#switch-status", StatusMessage).message = msg
+        try:
+            self.query_one("#switch-status", StatusMessage).message = msg
+        except Exception:
+            pass
 
     @work(thread=True)
     def load_data(self) -> None:
-        from hermes_cli.dashboard.data import (
-            get_active_model_info, get_custom_providers, get_lmstudio_models,
-            get_god_detail,
+        from hermes_cli.model_switch import (
+            list_authenticated_providers,
+            MODEL_ALIASES,
         )
-        
-        active = get_active_model_info()
-        providers = get_custom_providers()
+        from hermes_cli.dashboard.data import get_god_detail
+
+        current = _get_current_model_state()
         hermes_data = get_god_detail("Hermes")
 
-        # Find LM Studio URLs
-        lms_urls = set()
-        for p in providers:
-            url = p.get("base_url", "")
-            if "localhost" in url or "127.0.0.1" in url:
-                lms_urls.add(url)
-        if not lms_urls:
-            lms_urls.add("http://localhost:1234/v1")
-
-        # Check LM Studio connection
-        lms_models = []
-        lms_online = False
-        lms_url = ""
-        for url in sorted(lms_urls):
-            models = get_lmstudio_models(url)
-            if models:
-                lms_models = models
-                lms_online = True
-                lms_url = url
-                break
-            lms_url = url
-
-        # Build LM Studio panel content
-        if lms_online:
-            lines = [f"[bold #00FF99]● LM STUDIO ONLINE[/]  [dim #00A8CC]{lms_url}[/]\n"]
-            for m in lms_models:
-                mid = m.get("id", "?")
-                lines.append(f"  [bold #E0F7FF]⚕ {mid}[/]")
-            lms_text = "\n".join(lines)
-        else:
-            lms_text = (
-                f"[bold #FF4444]○ LM STUDIO OFFLINE[/]  [dim #00A8CC]{lms_url}[/]\n\n"
-                f"[dim #555577]Start LM Studio to see loaded models[/]"
+        try:
+            providers = list_authenticated_providers(
+                current_provider=current["provider"],
+                user_providers=current.get("user_providers"),
+                max_models=MAX_MODELS_PER_PROVIDER,
             )
+        except Exception:
+            providers = []
 
-        # Build providers panel content
-        active_model = active.get("model", "")
-        active_pname = active.get("provider_name", "")
-        
-        prov_lines = ["[bold #FFD700]ΓΝΩΣΤΟΙ — CONFIGURED PROVIDERS[/]\n"]
-        
-        for p in providers:
-            pname = p.get("name", "?")
-            purl = p.get("base_url", "")
-            models = p.get("models", [])
-            is_active_prov = pname == active_pname
-            
-            badge = "[bold #00FF99]◆ ACTIVE[/]" if is_active_prov else "[dim #555577]◇[/]"
-            prov_lines.append(f"  {badge}  [bold #FFD700]{pname}[/]  [dim #00A8CC]{purl}[/]")
-            
-            for m in models:
-                mid = m.get("id", "?")
-                ctx = m.get("context_length", 0)
-                ctx_str = f"  {ctx // 1024}K" if ctx else ""
-                is_current = is_active_prov and mid == active_model
-                marker = "[bold #00FF99]→[/]" if is_current else "[dim #2A2A50]│[/]"
-                prov_lines.append(f"      {marker}  [#E0F7FF]{mid}[/][dim #555577]{ctx_str}[/]")
-            
-            prov_lines.append("")
-        
-        prov_text = "\n".join(prov_lines)
+        aliases = sorted(MODEL_ALIASES.keys())
 
-        self.app.call_from_thread(self._apply, active, lms_text, prov_text, hermes_data)
+        active_info = {
+            "model": current["model"],
+            "provider": current["provider"],
+            "provider_label": current.get("provider_label", current["provider"]),
+            "base_url": current["base_url"],
+            "context_length": current.get("context_length"),
+        }
 
-    def _apply(self, active: dict, lms_text: str, prov_text: str, hermes_data: dict) -> None:
+        self.app.call_from_thread(
+            self._apply, active_info, providers, aliases, hermes_data,
+        )
+
+    def _apply(
+        self,
+        active: dict,
+        providers: list,
+        aliases: list,
+        hermes_data: dict,
+    ) -> None:
         self.query_one("#active-model", ActiveModelPanel).info = active
-        self.query_one("#lms-panel", LMStudioPanel).content = lms_text
-        self.query_one("#providers-panel", ProvidersPanel).content = prov_text
-        
+        self.query_one("#providers-panel", ProvidersPanel).providers_data = providers
+        self.query_one("#aliases-panel", AliasesPanel).aliases_data = aliases
+
         if hermes_data:
             self.query_one("#hermes-portrait", HermesPortrait).god_data = hermes_data
-        
-        model_inp = self.query_one("#switch-input-model", Input)
-        ctx_inp = self.query_one("#switch-input-context", Input)
-        model_inp.value = active.get("model") or ""
-        ctx = active.get("context_length")
-        ctx_inp.value = str(ctx) if ctx else ""
 
     def on_show(self) -> None:
         self.load_data()
+
+
+def _get_current_model_state() -> dict:
+    """Read the current model/provider/credentials from config + env.
+
+    This mirrors what the CLI does at startup to resolve the active model.
+    """
+    from hermes_cli.dashboard.data import get_active_model_info, get_hermes_config
+    from hermes_cli.providers import get_label
+
+    info = get_active_model_info()
+    cfg = get_hermes_config()
+
+    model = info.get("model", "unknown")
+    provider = info.get("provider", "unknown")
+    base_url = info.get("base_url", "")
+    context_length = info.get("context_length")
+
+    api_key = ""
+    try:
+        from hermes_cli.runtime_provider import resolve_runtime_provider
+        runtime = resolve_runtime_provider(requested=provider)
+        api_key = runtime.get("api_key", "")
+        if not base_url:
+            base_url = runtime.get("base_url", "")
+    except Exception:
+        pass
+
+    return {
+        "model": model,
+        "provider": provider,
+        "provider_label": get_label(provider),
+        "base_url": base_url,
+        "api_key": api_key,
+        "context_length": context_length,
+        "user_providers": cfg.get("providers"),
+    }
+
+
+def _persist_model_switch(result) -> None:
+    """Write a --global model switch to config.yaml."""
+    try:
+        import yaml
+        from hermes_constants import get_hermes_home
+        from utils import atomic_yaml_write
+
+        config_path = get_hermes_home() / "config.yaml"
+        if not config_path.exists():
+            return
+
+        with open(config_path) as f:
+            cfg = yaml.safe_load(f) or {}
+
+        if "model" not in cfg:
+            cfg["model"] = {}
+        cfg["model"]["default"] = result.new_model
+        cfg["model"]["provider"] = result.target_provider
+        if result.base_url:
+            cfg["model"]["base_url"] = result.base_url
+
+        atomic_yaml_write(config_path, cfg)
+    except Exception:
+        pass

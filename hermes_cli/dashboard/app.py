@@ -15,16 +15,13 @@ Features:
 Launch: `hermes dashboard` or `/dashboard` in the CLI.
 """
 
-import os
-import sys
 from pathlib import Path
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
+from textual.containers import Container, Horizontal
 from textual.reactive import reactive
-from textual.widgets import Static, Header, Footer, Button, Input, Label
-from textual.screen import Screen
+from textual.widgets import Static, Header, Footer, Button
 from textual import work
 
 from hermes_cli.dashboard.views.assembly import AssemblyView
@@ -34,6 +31,7 @@ from hermes_cli.dashboard.views.tablets import TabletsView
 from hermes_cli.dashboard.views.deep_dive import DeepDiveView
 from hermes_cli.dashboard.views.local_models import LocalModelsView
 from hermes_cli.dashboard.views.model_switch import ModelSwitchView
+from hermes_cli.dashboard.views.zeus import ZeusView
 
 
 VIEWS = [
@@ -44,7 +42,10 @@ VIEWS = [
     ("deepdive", "🔨 Deep Dive", "5"),
     ("local", "🌊 Local Forge", "6"),
     ("switch", "⚕ Switch", "7"),
+    ("zeus", "👁 Zeus", "8"),
 ]
+
+STATUS_ERROR_MAX_LEN = 50
 
 
 class NavBar(Static):
@@ -114,7 +115,7 @@ class StatusBar(Static):
         status = self.status_text or "Olympus Online"
         content = (
             "[dim #2A2A50]═══════════════[/]  "
-            "[dim #555577][1]⚡  [2]📜  [3]☀  [4]🕯  [5]🔨  [6]🌊  [7]⚕[/]  "
+            "[dim #555577][1]⚡  [2]📜  [3]☀  [4]🕯  [5]🔨  [6]🌊  [7]⚕  [8]👁[/]  "
             "[dim #2A2A50]│[/]  [dim #555577]q:quit  r:refresh  ◀:back[/]  "
             f"[dim #2A2A50]│[/]  [bold #FFD700]✦[/] [dim #00D4FF]{status}[/]  "
             "[dim #2A2A50]═══════════════[/]"
@@ -132,13 +133,14 @@ class OlympusDashboard(App):
     """OLYMPUS ASCENDED Dashboard — Divine Command Center for Hermes Agent.
     
     Features:
-    - 7 divine views: Assembly, Chronicle, Oracle, Tablets, Deep Dive, Local Forge, Switch
+    - 8 divine views: Assembly, Chronicle, Oracle, Tablets, Deep Dive, Local Forge, Switch, Zeus
     - Animated hero art with frame cycling
     - Interactive pantheon with god cards
     - Live execution lanes
     - Divine notifications
     - Cost tracker (Drachmai)
     - Quick actions bar
+    - Zeus Overseer monitor with live session turns and evaluations
     """
 
     TITLE = "⚡ OLYMPUS ASCENDED // DIVINE ORCHESTRATION SYSTEM"
@@ -152,6 +154,7 @@ class OlympusDashboard(App):
         Binding("5", "switch_view('deepdive')", "Deep Dive", show=False),
         Binding("6", "switch_view('local')", "Local Forge", show=False),
         Binding("7", "switch_view('switch')", "Switch", show=False),
+        Binding("8", "switch_view('zeus')", "Zeus", show=False),
         Binding("escape", "go_back", "Back", show=False),
         Binding("q", "quit", "Quit"),
         Binding("r", "refresh_data", "Refresh", show=False),
@@ -159,7 +162,7 @@ class OlympusDashboard(App):
     ]
 
     current_view: reactive[str] = reactive("assembly")
-    _view_history: list = []
+    _view_history: list[str] = []
 
     def compose(self) -> ComposeResult:
         yield NavBar()
@@ -172,6 +175,7 @@ class OlympusDashboard(App):
             DeepDiveView(id="view-deepdive", classes="hidden"),
             LocalModelsView(id="view-local", classes="hidden"),
             ModelSwitchView(id="view-switch", classes="hidden"),
+            ZeusView(id="view-zeus", classes="hidden"),
             id="main-content",
         )
         yield StatusBar()
@@ -193,7 +197,7 @@ class OlympusDashboard(App):
                 pass
         
         self._set_status("Divine systems initialized")
-        self.refresh_all_views()
+        self.refresh_current_view()
 
     def action_switch_view(self, view_name: str) -> None:
         if view_name != self.current_view:
@@ -255,13 +259,7 @@ class OlympusDashboard(App):
             self._quick_switch_openrouter()
         elif btn_id == "action-models":
             self.action_switch_view("switch")
-        elif btn_id == "action-strategy":
-            self.action_switch_view("oracle")
-        elif btn_id == "action-search":
-            self.action_switch_view("chronicle")
-        elif btn_id == "action-execute":
-            self.action_switch_view("deepdive")
-    
+
     @work(thread=True)
     def _quick_switch_lmstudio(self) -> None:
         """Quick switch to LM Studio local model."""
@@ -326,7 +324,7 @@ class OlympusDashboard(App):
         except Exception as e:
             self.app.call_from_thread(
                 self._set_status, 
-                f"✗ Error: {str(e)[:50]}"
+                f"✗ Error: {str(e)[:STATUS_ERROR_MAX_LEN]}"
             )
     
     @work(thread=True)
@@ -379,7 +377,7 @@ class OlympusDashboard(App):
         except Exception as e:
             self.app.call_from_thread(
                 self._set_status, 
-                f"✗ Error: {str(e)[:50]}"
+                f"✗ Error: {str(e)[:STATUS_ERROR_MAX_LEN]}"
             )
     
     def _refresh_assembly_model(self) -> None:
@@ -393,10 +391,10 @@ class OlympusDashboard(App):
 
     def action_refresh_data(self) -> None:
         self._set_status("Consulting the oracle...")
-        self.refresh_all_views()
+        self.refresh_current_view()
 
     @work(thread=True)
-    def refresh_all_views(self) -> None:
+    def refresh_current_view(self) -> None:
         try:
             view = self.query_one(f"#view-{self.current_view}")
             if hasattr(view, "load_data"):

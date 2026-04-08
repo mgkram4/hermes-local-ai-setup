@@ -17,12 +17,10 @@ import os
 import re
 import sys
 import time
-import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-# Rich for beautiful terminal output
 try:
     from rich.console import Console
     from rich.live import Live
@@ -36,14 +34,21 @@ except ImportError:
     sys.exit(1)
 
 
+MIN_TURNS_BETWEEN_NUDGES = 3
+SESSION_NOTES_TAIL = 3000
+STUCK_TURN_THRESHOLD = 4
+PROGRESS_RESPONSE_MIN_LEN = 100
+MONITOR_POLL_INTERVAL = 2
+MAX_TURNS_DISPLAYED = 8
+USER_MSG_TRUNCATE = 40
+RESPONSE_TRUNCATE = 35
+MAX_EVALUATIONS_SHOWN = 3
+
+
 def get_hermes_home() -> Path:
     """Get the Hermes home directory."""
     return Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes"))
 
-
-# ============================================================================
-# Message Queue — File-based IPC between Zeus and Hermes
-# ============================================================================
 
 ZEUS_QUEUE_FILE = "zeus_queue.json"
 
@@ -143,10 +148,6 @@ def clear_queue():
         queue_path.unlink()
 
 
-# ============================================================================
-# Session Notes Parsing
-# ============================================================================
-
 def get_latest_session_notes() -> dict:
     """Load the most recent session notes file."""
     sessions_dir = get_hermes_home() / "sessions"
@@ -239,10 +240,6 @@ def get_overseer_config() -> dict:
         return {}
 
 
-# ============================================================================
-# Zeus Brain — Decision Making
-# ============================================================================
-
 class ZeusBrain:
     """Zeus's decision-making engine for autonomous operation.
     
@@ -256,17 +253,14 @@ class ZeusBrain:
     def __init__(self):
         self._overseer = None
         self._last_turn_count = 0
-        self._last_eval_time = 0
         self._consecutive_incomplete = 0
         self._consecutive_no_progress = 0
         self._tasks_completed = 0
         self._session_goal = ""
         self._auto_mode = False
-        self._pending_tasks = []  # Queue of tasks from briefing
-        self._last_tool_count = 0
         self._last_error_count = 0
         self._last_nudge_turn = 0  # Don't nudge too frequently
-        self._min_turns_between_nudges = 3  # Wait at least 3 turns before nudging again
+        self._min_turns_between_nudges = MIN_TURNS_BETWEEN_NUDGES
         
     def get_overseer(self):
         """Get or create the Zeus Overseer instance."""
@@ -328,7 +322,7 @@ class ZeusBrain:
         error_count = session_notes.count("⚠") + session_notes.count("BLOCKED") + session_notes.count("failed")
         
         # Check if Hermes is making progress
-        is_making_progress = tools_used > 0 or len(last_response) > 100
+        is_making_progress = tools_used > 0 or len(last_response) > PROGRESS_RESPONSE_MIN_LEN
         errors_increasing = error_count > self._last_error_count + 2
         
         self._last_error_count = error_count
@@ -363,7 +357,7 @@ class ZeusBrain:
         try:
             result = overseer.evaluate(
                 task=task,
-                session_notes=session_notes[-3000:],
+                session_notes=session_notes[-SESSION_NOTES_TAIL:],
                 last_response=last_response,
             )
         except Exception as e:
@@ -394,7 +388,7 @@ class ZeusBrain:
             return f"[⚡ Zeus: {result.nudge}]"
         
         # Stuck for a while with no good suggestion
-        if self._consecutive_no_progress >= 4:
+        if self._consecutive_no_progress >= STUCK_TURN_THRESHOLD:
             self._last_nudge_turn = current_turn
             self._consecutive_no_progress = 0
             return "[⚡ Zeus: You seem stuck. Try a different approach, check for errors, or simplify the task.]"
@@ -468,10 +462,6 @@ Provide a clear, actionable instruction for the agent. Be specific."""
         return None
 
 
-# ============================================================================
-# Dashboard UI
-# ============================================================================
-
 def build_layout(data: dict, overseer_cfg: dict, zeus_brain: ZeusBrain, mode: str = "watch") -> Layout:
     """Build the dashboard layout."""
     layout = Layout()
@@ -512,16 +502,16 @@ def build_layout(data: dict, overseer_cfg: dict, zeus_brain: ZeusBrain, mode: st
     turns_table.add_column("Tools", style="cyan", width=8)
     turns_table.add_column("Response", style="dim", ratio=2)
     
-    for turn in turns[-8:]:  # Last 8 turns
+    for turn in turns[-MAX_TURNS_DISPLAYED:]:
         tools_count = len(turn.get("tools", []))
         tools_str = f"{tools_count} tools" if tools_count else "-"
         
-        user_short = turn.get("user", "")[:40]
-        if len(turn.get("user", "")) > 40:
+        user_short = turn.get("user", "")[:USER_MSG_TRUNCATE]
+        if len(turn.get("user", "")) > USER_MSG_TRUNCATE:
             user_short += "..."
         
-        resp_short = turn.get("response", "")[:35]
-        if len(turn.get("response", "")) > 35:
+        resp_short = turn.get("response", "")[:RESPONSE_TRUNCATE]
+        if len(turn.get("response", "")) > RESPONSE_TRUNCATE:
             resp_short += "..."
         
         turns_table.add_row(
@@ -601,7 +591,7 @@ def build_layout(data: dict, overseer_cfg: dict, zeus_brain: ZeusBrain, mode: st
     evals = data.get("overseer_evals", [])
     if evals:
         overseer_content.append("Evaluations:\n", style="bold white")
-        for ev in evals[-3:]:
+        for ev in evals[-MAX_EVALUATIONS_SHOWN:]:
             msg = ev.get("message", "")
             ts = ev.get("timestamp", "")
             
@@ -636,8 +626,7 @@ def build_layout(data: dict, overseer_cfg: dict, zeus_brain: ZeusBrain, mode: st
         mode_text.append("🚗 DRIVE MODE\n", style="bold yellow")
         mode_text.append("Nudges when stuck\n", style="dim")
         mode_text.append("Stops when complete\n", style="dim")
-        nudges = zeus_brain._last_nudge_turn
-        mode_text.append(f"Nudges sent: {nudges}", style="yellow")
+        mode_text.append(f"Last nudge at turn: {zeus_brain._last_nudge_turn}", style="yellow")
     elif mode == "auto":
         mode_text.append("🤖 AUTO MODE\n", style="bold green")
         mode_text.append("Nudges when stuck\n", style="dim")
@@ -650,10 +639,6 @@ def build_layout(data: dict, overseer_cfg: dict, zeus_brain: ZeusBrain, mode: st
     
     return layout
 
-
-# ============================================================================
-# Main Monitor Loop
-# ============================================================================
 
 def run_monitor(mode: str = "watch", goal: str = ""):
     """Run the Zeus monitor dashboard.
@@ -713,7 +698,7 @@ def run_monitor(mode: str = "watch", goal: str = ""):
                 layout = build_layout(data, overseer_cfg, zeus_brain, mode)
                 live.update(layout)
                 
-                time.sleep(2)
+                time.sleep(MONITOR_POLL_INTERVAL)
                 
     except KeyboardInterrupt:
         console.print("\n[dim]Zeus Monitor stopped.[/]")

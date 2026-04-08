@@ -32,10 +32,6 @@ from typing import Dict, List, Optional, Any, Callable
 logger = logging.getLogger(__name__)
 
 
-# ---------------------------------------------------------------------------
-# God metadata
-# ---------------------------------------------------------------------------
-
 GOD_ICONS: Dict[str, str] = {
     "Hermes":     "~E~",
     "Athena":     ">O<",
@@ -260,6 +256,17 @@ class FleetMonitor:
     DEBOUNCE_NORMAL = 4.0   # seconds between routine pushes
     DEBOUNCE_URGENT = 0.8   # seconds between urgent pushes
 
+    THINKING_SNIPPET_LEN = 60
+    TOOL_PREVIEW_LEN = 50
+    TASK_DISPLAY_LEN = 80
+    TASK_DISPLAY_SHORT_LEN = 60
+    TELEGRAM_HTTP_TIMEOUT = 6
+    TELEGRAM_ERROR_SLEEP = 5
+    QUEUE_GET_TIMEOUT = 60
+    FLEET_SNAPSHOT_TOOLS = 5
+    FLEET_SNAPSHOT_EVENTS = 10
+    RESET_DELAY_SECONDS = 8.0
+
     def __init__(self):
         self._state = FleetState()
         self._lock = threading.Lock()
@@ -269,7 +276,6 @@ class FleetMonitor:
         self._enabled = False
         self._verbose_mode = "normal"   # quiet / normal / god
         self._observability = "summary"  # off / summary / full
-        self._last_msg_id: Optional[int] = None
         self._push_thread: Optional[threading.Thread] = None
         # CLI observers — callbacks that receive real-time fleet updates
         self._cli_observers: List[Callable[[str, Dict[str, Any]], None]] = []
@@ -325,7 +331,7 @@ class FleetMonitor:
         self._observability = level.lower().strip()
 
     # ------------------------------------------------------------------
-    # CLI Observer API — real-time fleet updates for dashboard/TUI
+    # CLI Observer API
     # ------------------------------------------------------------------
 
     def register_observer(self, callback: Callable[[str, Dict[str, Any]], None]) -> None:
@@ -384,13 +390,13 @@ class FleetMonitor:
                         "tokens_out": a.tokens_out,
                         "tool_history": [
                             {"name": t.name, "preview": t.preview, "duration": t.duration, "status": t.status}
-                            for t in a.tool_history[-5:]  # last 5 tools
+                            for t in a.tool_history[-self.FLEET_SNAPSHOT_TOOLS:]
                         ],
                         "parent": a.parent,
                     }
                     for name, a in self._state.agents.items()
                 },
-                "events": list(self._state.events[-10:]),
+                "events": list(self._state.events[-self.FLEET_SNAPSHOT_EVENTS:]),
             }
 
     # ------------------------------------------------------------------
@@ -406,10 +412,10 @@ class FleetMonitor:
                 with monitor._lock:
                     agent = monitor._get_or_create("Hermes")
                     agent.status = "thinking"
-                    agent.last_event = (text[:60] if text else "")
+                    agent.last_event = (text[:monitor.THINKING_SNIPPET_LEN] if text else "")
                     agent.last_activity = time.time()
                     if monitor._verbose_mode == "god":
-                        monitor._log(f"Hermes thinking: {text[:60]}")
+                        monitor._log(f"Hermes thinking: {text[:monitor.THINKING_SNIPPET_LEN]}")
                 if monitor._verbose_mode == "god":
                     monitor._push(urgent=False)
             if original:
@@ -427,7 +433,7 @@ class FleetMonitor:
                     agent = monitor._get_or_create("Hermes")
                     agent.status = "querying"
                     agent.current_tool = function_name
-                    agent.tool_preview = (preview or "")[:50]
+                    agent.tool_preview = (preview or "")[:monitor.TOOL_PREVIEW_LEN]
                     agent.last_activity = time.time()
                     short = f" → {agent.tool_preview}" if agent.tool_preview else ""
                     agent.last_event = f"{function_name}{short}"
@@ -445,7 +451,7 @@ class FleetMonitor:
             if any(kw in message.lower() for kw in ("error", "fail", "interrupt", "retry")):
                 agent = self._get_or_create("Hermes")
                 agent.status = "interrupted"
-                agent.last_event = message[:60]
+                agent.last_event = message[:self.THINKING_SNIPPET_LEN]
         is_critical = any(kw in message.lower() for kw in ("error", "fail", "interrupt"))
         self._push(urgent=is_critical)
 
@@ -455,14 +461,13 @@ class FleetMonitor:
 
     def on_task_start(self, task: str) -> None:
         with self._lock:
-            self._state.task = task[:80]
+            self._state.task = task[:self.TASK_DISPLAY_LEN]
             self._state.start_time = time.time()
             self._state.events.clear()
-            self._last_msg_id = None   # new task = new message thread
             agent = self._get_or_create("Hermes")
             agent.status = "thinking"
             agent.step = 0
-            self._log(f"Task received: {task[:60]}")
+            self._log(f"Task received: {task[:self.TASK_DISPLAY_SHORT_LEN]}")
         self._push(urgent=True)
 
     def on_god_spawned(
@@ -477,7 +482,7 @@ class FleetMonitor:
             )
             hermes = self._get_or_create("Hermes")
             hermes.status = "processing"
-            goal_short = goal[:50] if goal else resolved_role
+            goal_short = goal[:self.TOOL_PREVIEW_LEN] if goal else resolved_role
             self._log(f"Hermes → {name}: {goal_short}")
         self._push(urgent=True)
         self._notify_observers("god_spawned", {
@@ -489,7 +494,7 @@ class FleetMonitor:
         with self._lock:
             agent = self._get_or_create(name)
             agent.status = "thinking"
-            agent.thinking_snippet = (snippet[:80] if snippet else "")
+            agent.thinking_snippet = (snippet[:self.TASK_DISPLAY_LEN] if snippet else "")
             agent.last_activity = time.time()
             if self._verbose_mode == "god":
                 self._log(f"{name} 💭 {snippet[:40]}")
@@ -502,9 +507,9 @@ class FleetMonitor:
             agent = self._get_or_create(name)
             agent.status = "querying"
             agent.current_tool = tool
-            agent.tool_preview = (preview or "")[:50]
+            agent.tool_preview = (preview or "")[:self.TOOL_PREVIEW_LEN]
             agent.last_activity = time.time()
-            agent.tool_history.append(ToolCall(name=tool, preview=preview[:50]))
+            agent.tool_history.append(ToolCall(name=tool, preview=preview[:self.TOOL_PREVIEW_LEN]))
             if len(agent.tool_history) > self.MAX_TOOL_HISTORY:
                 agent.tool_history.pop(0)
             self._log(f"{name}: {tool} → {preview[:30]}" if preview else f"{name}: {tool}")
@@ -517,7 +522,6 @@ class FleetMonitor:
             agent = self._get_or_create(name)
             agent.current_tool = ""
             agent.last_activity = time.time()
-            # Update the last tool in history
             if agent.tool_history and agent.tool_history[-1].name == tool:
                 agent.tool_history[-1].duration = duration
                 agent.tool_history[-1].status = status
@@ -547,7 +551,7 @@ class FleetMonitor:
             agent.current_tool = ""
             agent.last_activity = time.time()
             agent.api_calls = api_calls
-            short = result_preview[:50] if result_preview else "done"
+            short = result_preview[:self.TOOL_PREVIEW_LEN] if result_preview else "done"
             agent.last_event = short
             duration = agent.elapsed_seconds
             self._log(f"{name} ✓ {short}")
@@ -561,7 +565,7 @@ class FleetMonitor:
             agent = self._get_or_create(name)
             agent.status = "failed"
             agent.last_activity = time.time()
-            agent.last_event = error[:60] if error else "failed"
+            agent.last_event = error[:self.THINKING_SNIPPET_LEN] if error else "failed"
             self._log(f"⚠ {name} failed: {error[:50]}")
         self._push(urgent=True)
         self._notify_observers("god_failed", {"name": name, "error": error})
@@ -573,13 +577,7 @@ class FleetMonitor:
             agent.current_tool = ""
             self._log("Response delivered ✓")
         self._push(urgent=True)
-        # Reset subagents after a delay
-        threading.Timer(8.0, self._reset_subagents).start()
-
-    def on_step(self, iteration: int, tools: list, agent_name: str = "Hermes") -> None:
-        with self._lock:
-            agent = self._get_or_create(agent_name)
-            agent.step = iteration
+        threading.Timer(self.RESET_DELAY_SECONDS, self._reset_subagents).start()
 
     # ------------------------------------------------------------------
     # Telegram formatting
@@ -596,13 +594,11 @@ class FleetMonitor:
         lines.append(f"⚡ <b>OLYMPUS FLEET</b>  ·  ⏱ {elapsed_str}")
 
         if state.task:
-            # Truncate long tasks for mobile
             task_display = state.task if len(state.task) <= 70 else state.task[:67] + "..."
             lines.append(f"<i>{task_display}</i>")
 
         lines.append("──────────────────────")
 
-        # Agent tree: Hermes first, then children
         hermes = state.agents.get("Hermes")
         if hermes:
             lines.append(self._format_agent(hermes))
@@ -627,7 +623,6 @@ class FleetMonitor:
             lines.append("")
             lines.append(f"<code>{art}</code>")
 
-        # Verbose event feed
         if state.events and self._verbose_mode != "quiet":
             count = 8 if self._verbose_mode == "god" else 4
             lines.append("")
@@ -678,9 +673,8 @@ class FleetMonitor:
 
         while True:
             try:
-                urgent = self._push_queue.get(timeout=60)
+                urgent = self._push_queue.get(timeout=self.QUEUE_GET_TIMEOUT)
 
-                # Drain queue — only care about latest state
                 while not self._push_queue.empty():
                     try:
                         latest = self._push_queue.get_nowait()
@@ -688,7 +682,6 @@ class FleetMonitor:
                     except queue.Empty:
                         break
 
-                # Debounce
                 now = time.time()
                 debounce = self.DEBOUNCE_URGENT if urgent else self.DEBOUNCE_NORMAL
                 wait = debounce - (now - last_push)
@@ -698,7 +691,6 @@ class FleetMonitor:
                 text = self._format_message()
                 base = f"https://api.telegram.org/bot{self._tg_token}"
 
-                # Try edit first (keeps one live message per task)
                 edited = False
                 if last_msg_id:
                     r = requests.post(
@@ -709,7 +701,7 @@ class FleetMonitor:
                             "text": text,
                             "parse_mode": "HTML",
                         },
-                        timeout=6,
+                        timeout=self.TELEGRAM_HTTP_TIMEOUT,
                     )
                     edited = r.ok
 
@@ -721,7 +713,7 @@ class FleetMonitor:
                             "text": text,
                             "parse_mode": "HTML",
                         },
-                        timeout=6,
+                        timeout=self.TELEGRAM_HTTP_TIMEOUT,
                     )
                     if r.ok:
                         last_msg_id = r.json().get("result", {}).get("message_id")
@@ -734,7 +726,7 @@ class FleetMonitor:
                 pass
             except Exception as e:
                 logger.debug("Fleet monitor push error: %s", e)
-                time.sleep(5)
+                time.sleep(self.TELEGRAM_ERROR_SLEEP)
 
     # ------------------------------------------------------------------
     # Helpers

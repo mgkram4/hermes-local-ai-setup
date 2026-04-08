@@ -11,7 +11,7 @@ Features:
 import json
 import random
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
+from textual.containers import Horizontal, Vertical, ScrollableContainer
 from textual.reactive import reactive
 from textual.widgets import Static, Input
 from textual import work
@@ -243,7 +243,7 @@ class SessionTimeline(Static):
                         )
                 elif content:
                     text = _truncate(content, 200)
-                    lines.append(f"    [bold #9B59D6]💬 RESPONSE[/]\n      [#E0F7FF]{text}[/]")
+                    lines.append(f"    [bold #9B59B6]💬 RESPONSE[/]\n      [#E0F7FF]{text}[/]")
             elif role == "tool":
                 tool_name = msg.get("tool_name") or "?"
                 content = _truncate(msg.get("content") or "", 150)

@@ -96,7 +96,6 @@ Activate with ``/skin <name>`` in the CLI or ``display.skin: <name>`` in config.
 """
 
 import logging
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -105,10 +104,9 @@ from hermes_constants import get_hermes_home
 
 logger = logging.getLogger(__name__)
 
+_COMPLETION_BG = "#1a1a2e"
+_COMPLETION_BG_CURRENT = "#333355"
 
-# =============================================================================
-# Skin data structure
-# =============================================================================
 
 @dataclass
 class SkinConfig:
@@ -124,7 +122,6 @@ class SkinConfig:
     banner_hero: str = ""    # Rich-markup hero art (replaces HERMES_CADUCEUS)
     pantheon: List[Dict[str, str]] = field(default_factory=list)  # [{name, role}] for Pantheon Registry
     pantheon_style: str = ""  # "strip" for compact horizontal, "" for default grid
-    # New fields for OLYMPUS ASCENDED dashboard
     tool_god_mapping: Dict[str, str] = field(default_factory=dict)  # tool_name -> god_name
     execution_lanes: List[Dict[str, Any]] = field(default_factory=list)  # lane definitions
     animations: Dict[str, Any] = field(default_factory=dict)  # animation settings
@@ -132,7 +129,6 @@ class SkinConfig:
     dashboard: Dict[str, Any] = field(default_factory=dict)  # dashboard-specific settings
     hero_frames: List[str] = field(default_factory=list)  # animation frames for hero art
     flow_diagram: str = ""  # flow diagram template
-    # Cinematic features
     cinematic_intro_frames: List[str] = field(default_factory=list)  # intro animation frames
     god_activation_cinematics: Dict[str, List[str]] = field(default_factory=dict)  # per-god activation animations
     god_detail_template: str = ""  # template for god detail panels
@@ -175,10 +171,6 @@ class SkinConfig:
             if lane.get("god") == god_name:
                 return lane
         return None
-
-    def get_animation_setting(self, key: str, fallback: Any = None) -> Any:
-        """Get an animation setting with fallback."""
-        return self.animations.get(key, fallback)
 
     def get_god_lore(self, god_name: str) -> Optional[str]:
         """Get the lore/backstory for a god."""
@@ -232,10 +224,6 @@ class SkinConfig:
         """Get notification icon for a level (info, warn, error, success)."""
         return self.notifications.get(f"{level}_icon", fallback)
 
-
-# =============================================================================
-# Built-in skin definitions
-# =============================================================================
 
 _BUILTIN_SKINS: Dict[str, Dict[str, Any]] = {
     "default": {
@@ -593,10 +581,6 @@ _BUILTIN_SKINS: Dict[str, Dict[str, Any]] = {
 }
 
 
-# =============================================================================
-# Skin loading and management
-# =============================================================================
-
 _active_skin: Optional[SkinConfig] = None
 _active_skin_name: str = "default"
 
@@ -642,7 +626,6 @@ def _build_skin_config(data: Dict[str, Any]) -> SkinConfig:
         banner_hero=data.get("banner_hero", ""),
         pantheon=data.get("pantheon", []),
         pantheon_style=data.get("pantheon_style", ""),
-        # New OLYMPUS ASCENDED fields
         tool_god_mapping=data.get("tool_god_mapping", {}),
         execution_lanes=data.get("execution_lanes", []),
         animations=data.get("animations", {}),
@@ -650,7 +633,6 @@ def _build_skin_config(data: Dict[str, Any]) -> SkinConfig:
         dashboard=data.get("dashboard", {}),
         hero_frames=data.get("hero_frames", []),
         flow_diagram=data.get("flow_diagram", ""),
-        # Cinematic features
         cinematic_intro_frames=data.get("cinematic_intro_frames", []),
         god_activation_cinematics=data.get("god_activation_cinematics", {}),
         god_detail_template=data.get("god_detail_template", ""),
@@ -741,11 +723,6 @@ def init_skin_from_config(config: dict) -> None:
         set_active_skin("default")
 
 
-# =============================================================================
-# Convenience helpers for CLI modules
-# =============================================================================
-
-
 def get_active_prompt_symbol(fallback: str = "❯ ") -> str:
     """Get the interactive prompt symbol from the active skin."""
     try:
@@ -801,11 +778,11 @@ def get_prompt_toolkit_style_overrides() -> Dict[str, str]:
         "hint": f"{dim} italic",
         "input-rule": input_rule,
         "image-badge": f"{label} bold",
-        "completion-menu": f"bg:#1a1a2e {text}",
-        "completion-menu.completion": f"bg:#1a1a2e {text}",
-        "completion-menu.completion.current": f"bg:#333355 {title}",
-        "completion-menu.meta.completion": f"bg:#1a1a2e {dim}",
-        "completion-menu.meta.completion.current": f"bg:#333355 {label}",
+        "completion-menu": f"bg:{_COMPLETION_BG} {text}",
+        "completion-menu.completion": f"bg:{_COMPLETION_BG} {text}",
+        "completion-menu.completion.current": f"bg:{_COMPLETION_BG_CURRENT} {title}",
+        "completion-menu.meta.completion": f"bg:{_COMPLETION_BG} {dim}",
+        "completion-menu.meta.completion.current": f"bg:{_COMPLETION_BG_CURRENT} {label}",
         "clarify-border": input_rule,
         "clarify-title": f"{title} bold",
         "clarify-question": f"{text} bold",

@@ -26,12 +26,22 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from hermes_constants import get_hermes_home
+
 logger = logging.getLogger(__name__)
 
-
-def _get_hermes_home() -> Path:
-    """Get the Hermes home directory."""
-    return Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes"))
+MEMORY_TRUNCATE = 2000
+MEMORY_TAIL = 1800
+BRIEFING_TRUNCATE = 1500
+SESSION_NOTES_TAIL = 2500
+RESPONSE_PREVIEW_LEN = 400
+EVAL_TEMPERATURE = 0.1
+EVAL_MAX_TOKENS = 200
+CHAT_TEMPERATURE = 0.7
+CHAT_MAX_TOKENS = 500
+DEFAULT_CONFIDENCE = 0.5
+SESSION_CONTEXT_TAIL = 1500
+ERROR_PREVIEW_LEN = 100
 
 
 def _load_memory_context() -> str:
@@ -39,7 +49,7 @@ def _load_memory_context() -> str:
     
     Returns a truncated version suitable for the small model context window.
     """
-    hermes_home = _get_hermes_home()
+    hermes_home = get_hermes_home()
     memory_file = hermes_home / "MEMORY.md"
     
     if not memory_file.exists():
@@ -47,11 +57,8 @@ def _load_memory_context() -> str:
     
     try:
         content = memory_file.read_text(encoding="utf-8")
-        # Truncate to ~2000 chars to keep context manageable for small models
-        if len(content) > 2000:
-            # Try to keep the most recent/important parts
-            # Memory files typically have newer info at the bottom
-            content = "...(truncated)...\n" + content[-1800:]
+        if len(content) > MEMORY_TRUNCATE:
+            content = "...(truncated)...\n" + content[-MEMORY_TAIL:]
         return content
     except Exception:
         return ""
@@ -63,7 +70,7 @@ def _load_zeus_briefing() -> str:
     Users can create ~/.hermes/zeus_briefing.md with business context,
     priorities, and rules for Zeus to follow.
     """
-    hermes_home = _get_hermes_home()
+    hermes_home = get_hermes_home()
     briefing_file = hermes_home / "zeus_briefing.md"
     
     if not briefing_file.exists():
@@ -71,9 +78,8 @@ def _load_zeus_briefing() -> str:
     
     try:
         content = briefing_file.read_text(encoding="utf-8")
-        # Truncate if too long
-        if len(content) > 1500:
-            content = content[:1500] + "\n...(truncated)..."
+        if len(content) > BRIEFING_TRUNCATE:
+            content = content[:BRIEFING_TRUNCATE] + "\n...(truncated)..."
         return content
     except Exception:
         return ""
@@ -130,9 +136,9 @@ Rules:
 
     def __init__(
         self,
-        model: str = None,
-        base_url: str = None,
-        api_key: str = None,
+        model: str | None = None,
+        base_url: str | None = None,
+        api_key: str | None = None,
         timeout: float = 10.0,
         enabled: bool = True,
     ):
@@ -191,10 +197,10 @@ Rules:
         if briefing_context:
             prompt_parts.append(f"\nBRIEFING (goals & rules):\n{briefing_context}")
         
-        prompt_parts.append(f"\nSESSION NOTES (what has been done):\n{session_notes[-2500:] if len(session_notes) > 2500 else session_notes}")
+        prompt_parts.append(f"\nSESSION NOTES (what has been done):\n{session_notes[-SESSION_NOTES_TAIL:] if len(session_notes) > SESSION_NOTES_TAIL else session_notes}")
         
         if last_response:
-            prompt_parts.append(f"\nLAST RESPONSE FROM AGENT:\n{last_response[-400:] if len(last_response) > 400 else last_response}")
+            prompt_parts.append(f"\nLAST RESPONSE FROM AGENT:\n{last_response[-RESPONSE_PREVIEW_LEN:] if len(last_response) > RESPONSE_PREVIEW_LEN else last_response}")
         
         prompt_parts.append("\nIs this task complete? Respond with JSON only.")
         
@@ -208,8 +214,8 @@ Rules:
                     {"role": "system", "content": self.SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt},
                 ],
-                temperature=0.1,  # Low temp for consistent evaluation
-                max_tokens=200,
+                temperature=EVAL_TEMPERATURE,
+                max_tokens=EVAL_MAX_TOKENS,
             )
             
             content = response.choices[0].message.content.strip()
@@ -221,7 +227,7 @@ Rules:
                 complete=False,
                 confidence=0.0,
                 nudge=None,
-                reasoning=f"Evaluation failed: {str(e)[:50]}",
+                reasoning=f"Evaluation failed: {str(e)[:ERROR_PREVIEW_LEN // 2]}",
             )
     
     def _parse_response(self, content: str) -> OverseerResult:
@@ -237,7 +243,7 @@ Rules:
             
             return OverseerResult(
                 complete=bool(data.get("complete", False)),
-                confidence=float(data.get("confidence", 0.5)),
+                confidence=float(data.get("confidence", DEFAULT_CONFIDENCE)),
                 nudge=data.get("nudge") if not data.get("complete") else None,
                 reasoning=data.get("reasoning", "No reasoning provided"),
             )
@@ -248,7 +254,7 @@ Rules:
                 complete=False,
                 confidence=0.0,
                 nudge=None,
-                reasoning=f"Parse error: {content[:100]}",
+                reasoning=f"Parse error: {content[:ERROR_PREVIEW_LEN]}",
             )
     
     def format_nudge_for_injection(self, result: OverseerResult) -> Optional[str]:
@@ -265,7 +271,7 @@ Rules:
         self,
         message: str,
         session_context: str = "",
-        conversation_history: list = None,
+        conversation_history: list | None = None,
     ) -> str:
         """Chat directly with Zeus.
         
@@ -314,7 +320,7 @@ Use the provided context (memory, briefing, session) to give informed answers.""
             context_parts.append(f"[ZEUS BRIEFING:\n{briefing_context}]")
         
         if session_context:
-            context_parts.append(f"[SESSION CONTEXT:\n{session_context[-1500:]}]")
+            context_parts.append(f"[SESSION CONTEXT:\n{session_context[-SESSION_CONTEXT_TAIL:]}]")
         
         if context_parts:
             user_content = "\n\n".join(context_parts) + f"\n\nUser: {message}"
@@ -328,13 +334,13 @@ Use the provided context (memory, briefing, session) to give informed answers.""
             response = client.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                temperature=0.7,
-                max_tokens=500,
+                temperature=CHAT_TEMPERATURE,
+                max_tokens=CHAT_MAX_TOKENS,
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
             logger.debug("Zeus chat failed: %s", e)
-            return f"⚡ Zeus encountered an error: {str(e)[:100]}"
+            return f"⚡ Zeus encountered an error: {str(e)[:ERROR_PREVIEW_LEN]}"
     
     def relay_to_hermes(self, instruction: str) -> str:
         """Format an instruction from Zeus to be injected into Hermes conversation.
@@ -348,7 +354,6 @@ Use the provided context (memory, briefing, session) to give informed answers.""
         return f"[⚡ Zeus commands: {instruction}]"
 
 
-# Global instance for easy access
 _overseer: Optional[ZeusOverseer] = None
 
 
@@ -356,7 +361,6 @@ def get_overseer() -> ZeusOverseer:
     """Get or create the global Zeus Overseer instance."""
     global _overseer
     if _overseer is None:
-        # Load config
         try:
             from hermes_cli.config import load_config
             config = load_config()
